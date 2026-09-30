@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#282828">
+  <script>try{var theme=localStorage.getItem('chatgpt-usage-theme');document.documentElement.dataset.theme=['gruvbox','flexoki-light','retro-82','chatgpt'].includes(theme)?theme:'gruvbox'}catch(_){document.documentElement.dataset.theme='gruvbox'}</script>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <title>ChatGPT Usage</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #282828;
+      --panel: #282828;
+      --card: #3c3836;
+      --field: #1e1e1e;
+      --text: #d4be98;
+      --strong: #f2e6c6;
+      --muted: #bdae93;
+      --line: #665c54;
+      --soft-line: #504945;
+      --accent: #7daea3;
+      --accent-text: #152b29;
+      --accent-soft: #354640;
+      --warning: #d8a657;
+      --danger: #ea6962;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    :root[data-theme="flexoki-light"] {
+      color-scheme: light;
+      --page: #fffcf0;
+      --panel: #f2f0e5;
+      --card: #fffcf0;
+      --field: #f2f0e5;
+      --text: #100f0f;
+      --strong: #100f0f;
+      --muted: #575653;
+      --line: #b7b5ac;
+      --soft-line: #cecdc3;
+      --accent: #205ea6;
+      --accent-text: #fff;
+      --accent-soft: #dce8f2;
+      --warning: #ad8300;
+      --danger: #b93c32;
+      --shadow: 0 14px 34px rgba(31,36,39,.12);
+    }
+    :root[data-theme="retro-82"] {
+      color-scheme: dark;
+      --page: #05182e;
+      --panel: #0b2536;
+      --card: #133447;
+      --field: #061c30;
+      --text: #f6dcac;
+      --strong: #ffebc7;
+      --muted: #a7c9c6;
+      --line: #3f8f8a;
+      --soft-line: #285363;
+      --accent: #faa968;
+      --accent-text: #05182e;
+      --accent-soft: #4a3839;
+      --warning: #e97b3c;
+      --danger: #ff805c;
+      --shadow: 0 14px 34px rgba(0,0,0,.3);
+    }
+    :root[data-theme="chatgpt"] {
+      color-scheme: light;
+      --page: #f9f9f9;
+      --panel: #fff;
+      --card: #fff;
+      --field: #f0f0f0;
+      --text: #303030;
+      --strong: #0d0d0d;
+      --muted: #676767;
+      --line: #d9d9d9;
+      --soft-line: #e5e5e5;
+      --accent: #087f63;
+      --accent-text: #fff;
+      --accent-soft: #e6f4ef;
+      --warning: #a65d00;
+      --danger: #c0392b;
+      --shadow: 0 2px 12px rgba(0,0,0,.04);
+      --mono: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing:border-box; }
+    html { background:var(--page); }
+    body { margin:0; background:var(--page); color:var(--text); font:15px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; }
+    button,select { font:inherit; }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    .wrap { max-width:860px; margin:auto; padding:0 24px; }
+    .masthead { margin:0 18px; border-bottom:1px solid var(--line); }
+    .topbar,.panel-head,.footer { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .topbar { min-height:78px; padding:12px 24px; }
+    .brand { display:flex; align-items:center; gap:11px; color:var(--strong); text-decoration:none; font:700 19px/1.1 var(--mono); letter-spacing:.11em; text-transform:uppercase; }
+    .brand img { display:block; width:31px; height:31px; border-radius:4px; }
+    .actions { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+    .usage-link { border:1px solid var(--accent); border-radius:2px; color:var(--strong); font:600 11px/1.2 var(--mono); letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; text-decoration:none; }
+    .usage-link:hover { background:var(--accent-soft); }
+    .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent); cursor:pointer; font-size:20px; line-height:1; padding:0; }
+    .refresh:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .refresh:disabled { cursor:wait; opacity:.6; }
+    .theme-picker { display:flex; align-items:center; gap:8px; margin:0; color:var(--muted); font:600 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; }
+    .theme-picker select { max-width:155px; padding:9px 24px 9px 10px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--strong); font:600 12px/1 var(--mono); cursor:pointer; }
+    main { padding-top:20px!important; padding-bottom:35px!important; }
+    .panels { display:grid; gap:16px; }
+    .panel { min-width:0; background:var(--card); border:1px solid var(--soft-line); border-radius:3px; padding:26px; }
+    .panel-head { align-items:flex-start; }
+    .kicker { text-transform:uppercase; letter-spacing:.11em; color:var(--accent); font:600 10px/1.3 var(--mono); }
+    h1 { margin:7px 0 0; color:var(--strong); font:700 21px/1.2 var(--mono); letter-spacing:.04em; }
+    .badge { border:1px solid var(--accent); border-radius:2px; padding:6px 8px; font:600 11px/1.2 var(--mono); white-space:nowrap; background:var(--accent-soft); color:var(--accent); }
+    .badge.warn { color:var(--warning); background:var(--field); border-color:var(--warning); }
+    .badge.neutral { color:var(--muted); background:var(--panel); border-color:var(--line); }
+    .meter { display:flex; align-items:baseline; gap:11px; margin:23px 0 12px; }
+    .meter strong { color:var(--strong); font:700 clamp(50px,7vw,74px)/1 var(--mono); letter-spacing:-.075em; }
+    .meter span { color:var(--muted); font:12px/1.3 var(--mono); }
+    .bar { height:8px; background:var(--field); border-radius:2px; overflow:hidden; }
+    .bar i { display:block; height:100%; background:var(--accent); }
+    .bar i.warn { background:var(--warning); }
+    .chart-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:25px 0 8px; }
+    .chart-head b { color:var(--strong); font:700 12px/1.2 var(--mono); letter-spacing:.09em; text-transform:uppercase; }
+    select { max-width:175px; border:1px solid var(--line); background:var(--field); color:var(--strong); border-radius:2px; padding:6px 8px; font:11px/1.3 var(--mono); cursor:pointer; }
+    .plot { display:block; width:100%; height:auto; font-family:var(--mono); }
+    .legend { display:flex; align-items:center; gap:18px; color:var(--muted); font:11px/1.3 var(--mono); margin:0 0 18px; }
+    .legend span { display:flex; align-items:center; gap:6px; }
+    .swatch { width:18px; height:3px; background:var(--accent); display:inline-block; }
+    .swatch.guide { background:var(--muted); opacity:.6; }
+    .metrics { display:grid; grid-template-columns:1fr 1fr; gap:10px; border-top:1px solid var(--soft-line); padding-top:16px; }
+    .metric small { display:block; color:var(--muted); font:11px/1.3 var(--mono); }
+    .metric b { display:block; color:var(--strong); font:600 13px/1.4 var(--mono); margin-top:5px; }
+    .panel-foot { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font:11px/1.4 var(--mono); margin-top:15px; }
+    .statusbar { margin-top:13px; color:var(--muted); font:11px/1.5 var(--mono); }
+    .statusbar strong { color:var(--strong); }
+    .error { color:var(--danger)!important; }
+    .empty { text-align:center; padding:55px 25px; color:var(--muted); }
+    .empty p { margin:8px 0 0; }
+    .explain { margin-top:19px; color:var(--muted); font-size:12px; }
+    .explain summary { cursor:pointer; width:max-content; color:var(--accent); font:600 11px/1.4 var(--mono); }
+    .explain p { margin:7px 0 0; max-width:650px; }
+    .footer { border-top:1px solid var(--line); padding-top:18px!important; padding-bottom:25px!important; color:var(--muted); font:10px/1.5 var(--mono); }
+    :root[data-theme="chatgpt"] .panel { border-radius:16px; box-shadow:var(--shadow); }
+    :root[data-theme="chatgpt"] .brand,
+    :root[data-theme="chatgpt"] .usage-link,
+    :root[data-theme="chatgpt"] .theme-picker,
+    :root[data-theme="chatgpt"] .chart-head b,
+    :root[data-theme="chatgpt"] .kicker { text-transform:none; letter-spacing:0; }
+    :root[data-theme="chatgpt"] h1 { letter-spacing:-.02em; }
+    :root[data-theme="chatgpt"] .meter strong { letter-spacing:-.05em; }
+    :root[data-theme="chatgpt"] .usage-link { border-color:var(--line); }
+    :root[data-theme="chatgpt"] select,
+    :root[data-theme="chatgpt"] .refresh,
+    :root[data-theme="chatgpt"] .usage-link { border-radius:8px; }
+    :root[data-theme="chatgpt"] .badge,
+    :root[data-theme="chatgpt"] .bar { border-radius:999px; }
+    @media(max-width:800px) {
+      .topbar { flex-wrap:wrap; gap:12px; }
+      .brand { font-size:16px; }
+      .actions { flex-wrap:wrap; gap:8px; }
+      .theme-picker > span { display:none; }
+    }
+    @media(max-width:500px) {
+      .wrap { padding-left:16px; padding-right:16px; }
+      .masthead { margin:0; }
+      .topbar { min-height:62px; padding:12px 16px; }
+      .brand { font-size:13px; letter-spacing:.04em; gap:7px; }
+      .brand img { width:25px; height:25px; }
+      .actions { width:100%; }
+      .usage-link { padding:8px; font-size:10px; }
+      .refresh { width:31px; height:31px; }
+      .theme-picker { margin-left:auto; }
+      .theme-picker select { max-width:112px; padding:8px 5px; font-size:10px; }
+      main { padding-top:12px!important; }
+      .panel { padding:18px; }
+      h1 { font-size:17px; }
+      .panel-head { gap:10px; flex-wrap:wrap; }
+      .meter { margin-top:19px; }
+      .meter strong { font-size:54px; }
+      .chart-head { margin-top:19px; }
+      .panel-foot { flex-direction:column; gap:2px; }
+      .footer { flex-direction:column; align-items:flex-start; gap:3px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"><option value="gruvbox">Gruvbox</option><option value="flexoki-light">Flexoki Light</option><option value="retro-82">Retro 82</option><option value="chatgpt">ChatGPT</option></select></label></div></div></header>
+  <main class="wrap">
+    <div id="panels" class="panels"></div>
+    <div id="status" class="statusbar">Loading usage data…</div>
+    <details class="explain"><summary>About this chart</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through the reported week. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
+  </main>
+  <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
+  <script>
+    const themeColors = { gruvbox: '#282828', 'flexoki-light': '#fffcf0', 'retro-82': '#05182e', chatgpt: '#f9f9f9' };
+    const themePicker = document.querySelector('[data-theme-picker]');
+    function setTheme(theme, persist = true) {
+      if (!Object.hasOwn(themeColors, theme)) return;
+      document.documentElement.dataset.theme = theme;
+      if (themePicker) themePicker.value = theme;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColors[theme]);
+      if (persist) {
+        try { localStorage.setItem('chatgpt-usage-theme', theme); } catch (_) { /* Browsing still works when storage is unavailable. */ }
+      }
+    }
+    setTheme(document.documentElement.dataset.theme || 'gruvbox', false);
+    themePicker?.addEventListener('change', (event) => setTheme(event.target.value));
+
+    const panels = document.getElementById('panels');
+    const status = document.getElementById('status');
+    let selectedReset = null;
+    let lastData = null;
+    const dateTime = seconds => new Date(seconds * 1000).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
+    const percent = number => `${Math.round(number)}%`;
+    const duration = seconds => {
+      if (seconds <= 0) return 'now';
+      const hours = Math.floor(seconds / 3600), minutes = Math.floor((seconds % 3600) / 60);
+      if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+      return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+    };
+    function pace(window) {
+      const now = Date.now() / 1000, length = window.duration_mins * 60;
+      const ideal = Math.max(0, Math.min(100, (window.resets_at - now) / length * 100));
+      const remaining = 100 - window.used_percent;
+      const difference = remaining - ideal;
+      if (window.resets_at <= now) return {tone:'neutral', label:'Awaiting reset', detail:'Latest window has ended'};
+      if (now - window.sampled_at > 1800) return {tone:'neutral', label:'Sample is stale', detail:'Waiting for a recent sample'};
+      if (Math.abs(difference) < 5) return {tone:'neutral', label:'On pace', detail:'Within 5 points of even pace'};
+      return difference > 0
+        ? {tone:'good', label:'Room to spare', detail:`${Math.round(difference)} points above even pace`}
+        : {tone:'warn', label:'Burning fast', detail:`${Math.round(-difference)} points below even pace`};
+    }
+
+    function chart(window, reset, samples) {
+      const width = matchMedia('(max-width: 600px)').matches ? 360 : 760;
+      const height = 225, left = 34, right = 13, top = 12, bottom = 33;
+      const start = reset - window.duration_mins * 60, span = reset - start;
+      const x = time => left + Math.max(0, Math.min(1, (time - start) / span)) * (width - left - right);
+      const y = remaining => top + (100 - remaining) / 100 * (height - top - bottom);
+      let html = '';
+      for (const value of [100, 50, 0]) {
+        html += `<line x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}" stroke="var(--soft-line)" stroke-dasharray="${value === 0 ? '' : '3 5'}"/><text x="0" y="${y(value)+4}" fill="var(--muted)" font-size="11">${value}%</text>`;
+      }
+      html += `<line x1="${x(start)}" y1="${y(100)}" x2="${x(reset)}" y2="${y(0)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
+      const now = Date.now() / 1000;
+      if (start < now && now < reset) html += `<line x1="${x(now)}" y1="${top}" x2="${x(now)}" y2="${height-bottom}" stroke="var(--warning)" stroke-width="1.5" stroke-dasharray="3 5"/>`;
+      const points = samples.filter(p => p.sampled_at >= start && p.sampled_at <= reset && Number.isFinite(p.used_percent));
+      if (points.length > 1) html += `<polyline points="${points.map(p => `${x(p.sampled_at)},${y(100-p.used_percent)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+      for (const p of points) html += `<circle cx="${x(p.sampled_at)}" cy="${y(100-p.used_percent)}" r="3.5" fill="var(--accent)"><title>${percent(100-p.used_percent)} remaining · ${dateTime(p.sampled_at)}</title></circle>`;
+      html += `<text x="${left}" y="${height-4}" fill="var(--muted)" font-size="11">${dateTime(start)}</text><text x="${width-right}" y="${height-4}" text-anchor="end" fill="var(--muted)" font-size="11">${dateTime(reset)}</text>`;
+      return `<svg class="plot" viewBox="0 0 ${width} ${height}" role="img" aria-label="Remaining allowance over time versus even pace">${html}</svg>`;
+    }
+
+    function emptyPanel() {
+      const article = document.createElement('article');
+      article.className = 'panel empty';
+      article.innerHTML = '<h1>Waiting for weekly usage</h1><p>The next successful check will show your allowance here.</p>';
+      return article;
+    }
+
+    function panel(window) {
+      const remaining = 100 - window.used_percent, currentPace = pace(window);
+      const article = document.createElement('article');
+      article.className = 'panel';
+      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Codex · weekly</div><h1>Weekly allowance</h1></div><span class="badge"></span></div>
+        <div class="meter"><strong></strong><span>remaining</span></div><div class="bar"><i></i></div>
+        <div class="chart-head"><b>Burndown</b><select aria-label="Choose usage window"></select></div><div class="chart"></div>
+        <div class="legend"><span><i class="swatch"></i> Actual</span><span><i class="swatch guide"></i> Even pace</span></div>
+        <div class="metrics"><div class="metric"><small>Resets</small><b class="reset"></b></div><div class="metric"><small>Time left</small><b class="time-left"></b></div></div>
+        <div class="panel-foot"><span class="pace-detail"></span></div>`;
+      article.querySelector('.meter strong').textContent = percent(remaining);
+      article.querySelector('.badge').textContent = currentPace.label;
+      article.querySelector('.badge').classList.add(currentPace.tone);
+      article.querySelector('.bar i').style.width = `${Math.max(0, remaining)}%`;
+      if (currentPace.tone === 'warn') article.querySelector('.bar i').classList.add('warn');
+      article.querySelector('.reset').textContent = dateTime(window.resets_at);
+      article.querySelector('.time-left').textContent = duration(window.resets_at - Date.now()/1000);
+      article.querySelector('.pace-detail').textContent = currentPace.detail;
+      const select = article.querySelector('select');
+      for (const cycle of window.cycles) {
+        const option = document.createElement('option');
+        option.value = String(cycle);
+        option.textContent = cycle === window.resets_at ? 'Current window' : `Reset ${dateTime(cycle)}`;
+        select.append(option);
+      }
+      const chartElement = article.querySelector('.chart');
+      chartElement.innerHTML = chart(window, window.resets_at, window.samples);
+      const showCycle = async () => {
+        const reset = Number(select.value);
+        if (reset === window.resets_at) { chartElement.innerHTML = chart(window, reset, window.samples); return; }
+        try {
+          const response = await fetch(`/api/series?source=${encodeURIComponent(window.source_key)}&reset=${reset}`);
+          const data = await response.json();
+          chartElement.innerHTML = chart(window, reset, data.samples);
+        } catch { chartElement.textContent = 'Could not load this window.'; }
+      };
+      select.addEventListener('change', () => { selectedReset = Number(select.value); showCycle(); });
+      if (selectedReset && window.cycles.includes(selectedReset)) {
+        select.value = String(selectedReset);
+        showCycle();
+      } else {
+        selectedReset = null;
+      }
+      return article;
+    }
+
+    function render(data) {
+      lastData = data;
+      panels.replaceChildren();
+      const weekly = data.windows.find(w => w.limit_id === 'codex' && w.window_kind === 'week') || data.windows.find(w => w.window_kind === 'week');
+      panels.append(weekly ? panel(weekly) : emptyPanel());
+      const last = data.last_run;
+      if (!last) status.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
+      else if (!last.ok) { status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.`; status.classList.add('error'); }
+      else { status.classList.remove('error'); status.textContent = `Checked ${dateTime(last.checked_at)} · auto-refreshes while visible`; }
+    }
+
+    async function loadCached() {
+      try {
+        const response = await fetch('/api/dashboard', {cache:'no-store'});
+        if (!response.ok) throw new Error('Dashboard unavailable');
+        render(await response.json());
+      } catch (error) { status.textContent = error.message || 'Could not load usage data'; status.classList.add('error'); }
+    }
+
+    let refreshing = false;
+    let initialized = false;
+    const refreshButton = document.getElementById('refresh');
+    async function refreshLive(force = false) {
+      if (refreshing) return;
+      refreshing = true;
+      refreshButton.disabled = true;
+      refreshButton.textContent = '…';
+      status.classList.remove('error');
+      status.textContent = 'Checking live usage…';
+      try {
+        const response = await fetch(force ? '/api/refresh?force=1' : '/api/refresh', {method:'POST', cache:'no-store'});
+        if (!response.ok) throw new Error('Could not check live usage');
+        render(await response.json());
+      } catch (error) {
+        status.textContent = `${error.message || 'Could not check live usage'}. Showing the last sample.`;
+        status.classList.add('error');
+      } finally {
+        refreshing = false;
+        refreshButton.disabled = false;
+        refreshButton.textContent = '↻';
+      }
+    }
+
+    refreshButton.addEventListener('click', () => refreshLive(true));
+    document.addEventListener('visibilitychange', () => { if (initialized && !document.hidden) refreshLive(); });
+    window.addEventListener('focus', () => { if (initialized && !document.hidden) refreshLive(); });
+    window.addEventListener('resize', () => { if (lastData && !refreshing) render(lastData); });
+    loadCached().then(() => { initialized = true; refreshLive(); });
+    setInterval(() => { if (!document.hidden) refreshLive(); }, 60000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "display_name": "ChatGPT Usage",
+  "description": "Codex allowance, history, and burn pace.",
+  "icon": "static/icon.svg",
+  "access": "authenticated",
+  "access_groups": ["admin"],
+  "process": {
+    "command": ["python3", "app.py", "serve"],
+    "working_directory": ".",
+    "environment_files": [".env"],
+    "readiness": { "type": "http", "path": "/health" }
+  },
+  "idle": "5m",
+  "cron": [
+    {
+      "name": "collect-usage",
+      "schedule": "*/10 * * * *",
+      "command": ["python3", "app.py", "collect"],
+      "timeout": "45s",
+      "overlap": "forbid",
+      "missed": "skip"
+    }
+  ],
+  "watch": { "ignore": ["data", "__pycache__"] }
+}
