@@ -232,14 +232,17 @@
     function chart(window, reset, samples) {
       const width = matchMedia('(max-width: 600px)').matches ? 360 : 760;
       const height = 225, left = 34, right = 13, top = 12, bottom = 33;
-      const start = reset - window.duration_mins * 60, span = reset - start;
+      const windowStart = reset - window.duration_mins * 60;
+      const start = samples.reduce((earliest, p) => Math.min(earliest, p.sampled_at), windowStart);
+      const span = reset - start;
       const x = time => left + Math.max(0, Math.min(1, (time - start) / span)) * (width - left - right);
       const y = remaining => top + (100 - remaining) / 100 * (height - top - bottom);
       let html = '';
       for (const value of [100, 50, 0]) {
         html += `<line x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}" stroke="var(--soft-line)" stroke-dasharray="${value === 0 ? '' : '3 5'}"/><text x="0" y="${y(value)+4}" fill="var(--muted)" font-size="11">${value}%</text>`;
       }
-      html += `<line x1="${x(start)}" y1="${y(100)}" x2="${x(reset)}" y2="${y(0)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
+      if (start < windowStart) html += `<line x1="${x(start)}" y1="${y(100)}" x2="${x(windowStart)}" y2="${y(100)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
+      html += `<line x1="${x(windowStart)}" y1="${y(100)}" x2="${x(reset)}" y2="${y(0)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
       const now = Date.now() / 1000;
       if (start < now && now < reset) html += `<line x1="${x(now)}" y1="${top}" x2="${x(now)}" y2="${height-bottom}" stroke="var(--warning)" stroke-width="1.5" stroke-dasharray="3 5"/>`;
       const points = samples.filter(p => p.sampled_at >= start && p.sampled_at <= reset && Number.isFinite(p.used_percent));

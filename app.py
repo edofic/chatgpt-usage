@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "usage.sqlite"))
 CODEX_BIN = os.environ.get("CODEX_BIN", "codex")
 KINDS = {300: "5h", 10080: "week"}
+RESET_TOLERANCE = 60  # Reported reset timestamps can vary by a few seconds.
 
 
 class CollectionError(Exception):
@@ -193,10 +194,47 @@ def row_dict(row):
     return dict(row) if row is not None else None
 
 
+def usage_cycles(connection, account_id, source_key):
+    """Group reset estimates into observed cycles without altering raw samples."""
+    cycles = []
+    awaiting_activity = False
+    rows = connection.execute("""SELECT sampled_at, used_percent, resets_at, duration_mins
+        FROM samples WHERE account_id = ? AND source_key = ?
+        ORDER BY sampled_at, id""", (account_id, source_key))
+    for row in rows:
+        start = row["resets_at"] - row["duration_mins"] * 60
+        # An unused allowance can report a full window from the check time until
+        # activity anchors its reset. Those moving estimates are one idle cycle.
+        floating = (row["used_percent"] == 0
+                    and abs(start - row["sampled_at"]) <= RESET_TOLERANCE)
+        same_cycle = False
+        if cycles and cycles[-1]["duration_mins"] == row["duration_mins"]:
+            cycle = cycles[-1]
+            same_cycle = abs(row["resets_at"] - cycle["resets_at"]) <= RESET_TOLERANCE
+            if not same_cycle and awaiting_activity:
+                same_cycle = (row["sampled_at"] < cycle["resets_at"]
+                              and cycle["samples"][0]["sampled_at"] - RESET_TOLERANCE
+                              <= start <= row["sampled_at"] + RESET_TOLERANCE)
+        if not same_cycle:
+            cycles.append({"resets_at": row["resets_at"],
+                           "duration_mins": row["duration_mins"],
+                           "reset_estimates": set(), "samples": []})
+            awaiting_activity = floating
+        else:
+            awaiting_activity = awaiting_activity and floating
+        cycle = cycles[-1]
+        cycle["resets_at"] = row["resets_at"]
+        cycle["reset_estimates"].add(row["resets_at"])
+        cycle["samples"].append({"sampled_at": row["sampled_at"],
+                                 "used_percent": row["used_percent"]})
+    return cycles
+
+
 def series(connection, account_id, source_key, reset):
-    return [dict(row) for row in connection.execute("""SELECT sampled_at, used_percent
-        FROM samples WHERE account_id = ? AND source_key = ? AND resets_at = ?
-        ORDER BY sampled_at""", (account_id, source_key, reset))]
+    for cycle in reversed(usage_cycles(connection, account_id, source_key)):
+        if reset in cycle["reset_estimates"]:
+            return cycle["samples"]
+    return []
 
 
 def dashboard():
@@ -220,12 +258,11 @@ def dashboard():
                 item = dict(row)
                 item.pop("account_id")
                 item.pop("id")
-                item["cycles"] = [r[0] for r in connection.execute("""SELECT DISTINCT resets_at
-                    FROM samples WHERE account_id = ? AND source_key = ?
-                    ORDER BY resets_at DESC LIMIT 16""",
-                    (account["account_id"], row["source_key"]))]
-                item["samples"] = series(connection, account["account_id"],
-                                         row["source_key"], row["resets_at"])
+                cycles = usage_cycles(connection, account["account_id"], row["source_key"])
+                cycles = [cycle for cycle in cycles
+                          if cycle["duration_mins"] == row["duration_mins"]]
+                item["cycles"] = [cycle["resets_at"] for cycle in reversed(cycles[-16:])]
+                item["samples"] = cycles[-1]["samples"]
                 windows.append(item)
         return {"last_run": run, "server_time": int(time.time()), "windows": windows}
     finally:

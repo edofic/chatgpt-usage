@@ -89,7 +89,9 @@ The collector calls [`account/rateLimits/read`](https://learn.chatgpt.com/docs/a
 
 Only account identifiers, bucket metadata, percentages, and timestamps are stored. Credentials and raw RPC replies are not saved or printed by this app. The database, SQLite sidecar files, and environment files are ignored by Git; mini-cloud also ignores `data/` when watching for changes. History is retained until you delete it. Stop the app and collector before deleting the database and its sidecar files.
 
-The even-pace line runs from 100% remaining at the inferred window start to 0% at reset. It is a planning reference and does not account for changing allowance, rolling windows, or resets between samples. Bursts between samples may be missed. Failed collection records a status code and leaves previous samples visible; a manual collector run exits nonzero on failure.
+The window selector groups small reset-time variations and moving reset estimates while an allowance is unused into one observed window. Raw timestamps remain stored, and the chart includes idle samples before activity anchors the window's start.
+
+The even-pace line runs from 100% remaining at the inferred window start to 0% at reset, staying at 100% during any preceding idle period. It is a planning reference and does not account for changing allowance, rolling windows, or resets between samples. Bursts between samples may be missed. Failed collection records a status code and leaves previous samples visible; a manual collector run exits nonzero on failure.
 
 ## License
 
