@@ -4,7 +4,38 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#282828">
-  <script>try{var theme=localStorage.getItem('chatgpt-usage-theme');document.documentElement.dataset.theme=['gruvbox','flexoki-light','retro-82','chatgpt'].includes(theme)?theme:'gruvbox'}catch(_){document.documentElement.dataset.theme='gruvbox'}</script>
+  <script>
+    // Released Omarchy palettes: https://github.com/omacom/omarchy/tree/v4.0.4/themes
+    const themes = {
+      'gruvbox': 'Gruvbox',
+      'catppuccin-latte': 'Catppuccin Latte',
+      'catppuccin': 'Catppuccin',
+      'ethereal': 'Ethereal',
+      'everforest': 'Everforest',
+      'flexoki-light': 'Flexoki Light',
+      'hackerman': 'Hackerman',
+      'kanagawa': 'Kanagawa',
+      'last-horizon': 'Last Horizon',
+      'lumon': 'Lumon',
+      'lupine': 'Lupine',
+      'matte-black': 'Matte Black',
+      'miasma': 'Miasma',
+      'nord': 'Nord',
+      'osaka-jade': 'Osaka Jade',
+      'retro-82': 'Retro 82',
+      'ristretto': 'Ristretto',
+      'rose-pine': 'Rose Pine',
+      'solitude': 'Solitude',
+      'tokyo-night': 'Tokyo Night',
+      'vantablack': 'Vantablack',
+      'white': 'White',
+      'chatgpt': 'ChatGPT',
+    };
+    try {
+      const savedTheme = localStorage.getItem('chatgpt-usage-theme');
+      document.documentElement.dataset.theme = Object.hasOwn(themes, savedTheme) ? savedTheme : 'gruvbox';
+    } catch (_) { document.documentElement.dataset.theme = 'gruvbox'; }
+  </script>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <title>ChatGPT Usage</title>
   <style>
@@ -20,6 +51,7 @@
       --line: #665c54;
       --soft-line: #504945;
       --accent: #7daea3;
+      --accent-ink: var(--accent);
       --accent-text: #152b29;
       --accent-soft: #354640;
       --warning: #d8a657;
@@ -63,6 +95,368 @@
       --danger: #ff805c;
       --shadow: 0 14px 34px rgba(0,0,0,.3);
     }
+    /* Additional stock palettes, adapted for dashboard surfaces and readable text. */
+    :root[data-theme="catppuccin-latte"] {
+      color-scheme: light;
+      --page: #eff1f5;
+      --panel: #eff1f5;
+      --card: #e3e4e8;
+      --field: #e3e4e8;
+      --text: #4c4f69;
+      --strong: #4c4f69;
+      --muted: #5c5f77;
+      --line: #acb0be;
+      --soft-line: #ccd0da;
+      --accent: #1e66f5;
+      --accent-ink: color-mix(in srgb, #1e66f5, #000000 20%);
+      --accent-text: #eff1f5;
+      --accent-soft: color-mix(in srgb, #1e66f5 12%, #e3e4e8);
+      --warning: color-mix(in srgb, #df8e1d, #000000 40%);
+      --danger: color-mix(in srgb, #d20f39, #000000 5%);
+      --shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
+    :root[data-theme="catppuccin"] {
+      color-scheme: dark;
+      --page: #1e1e2e;
+      --panel: #1e1e2e;
+      --card: #313244;
+      --field: #161622;
+      --text: #cdd6f4;
+      --strong: #cdd6f4;
+      --muted: #bac2de;
+      --line: #585b70;
+      --soft-line: #45475a;
+      --accent: #89b4fa;
+      --accent-ink: #89b4fa;
+      --accent-text: #1e1e2e;
+      --accent-soft: color-mix(in srgb, #89b4fa 12%, #313244);
+      --warning: #f9e2af;
+      --danger: #f38ba8;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="ethereal"] {
+      color-scheme: dark;
+      --page: #060b1e;
+      --panel: #060b1e;
+      --card: #131a3a;
+      --field: #040816;
+      --text: #ffcead;
+      --strong: #ffcead;
+      --muted: #c9b8a6;
+      --line: #6d7db6;
+      --soft-line: #252e56;
+      --accent: #7d82d9;
+      --accent-ink: color-mix(in srgb, #7d82d9, #ffffff 10%);
+      --accent-text: #060b1e;
+      --accent-soft: color-mix(in srgb, #7d82d9 12%, #131a3a);
+      --warning: #e9bb4f;
+      --danger: #ed5b5a;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="everforest"] {
+      color-scheme: dark;
+      --page: #2d353b;
+      --panel: #2d353b;
+      --card: #343f44;
+      --field: #21272c;
+      --text: #d3c6aa;
+      --strong: #d3c6aa;
+      --muted: color-mix(in srgb, #9da9a0, #ffffff 5%);
+      --line: #475258;
+      --soft-line: #3d484d;
+      --accent: #7fbbb3;
+      --accent-ink: color-mix(in srgb, #7fbbb3, #ffffff 20%);
+      --accent-text: #2d353b;
+      --accent-soft: color-mix(in srgb, #7fbbb3 12%, #343f44);
+      --warning: #dbbc7f;
+      --danger: color-mix(in srgb, #e67e80, #ffffff 15%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="hackerman"] {
+      color-scheme: dark;
+      --page: #0b0c16;
+      --panel: #0b0c16;
+      --card: #151828;
+      --field: #080910;
+      --text: #ddf7ff;
+      --strong: #ddf7ff;
+      --muted: #b5c5db;
+      --line: #2d3450;
+      --soft-line: #1f253a;
+      --accent: #82fb9c;
+      --accent-ink: #82fb9c;
+      --accent-text: #0b0c16;
+      --accent-soft: color-mix(in srgb, #82fb9c 12%, #151828);
+      --warning: #50f7d4;
+      --danger: #50f872;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="kanagawa"] {
+      color-scheme: dark;
+      --page: #1f1f28;
+      --panel: #1f1f28;
+      --card: #223249;
+      --field: #17171e;
+      --text: #dcd7ba;
+      --strong: #dcd7ba;
+      --muted: #c8c093;
+      --line: #54546d;
+      --soft-line: #363646;
+      --accent: #dcd7ba;
+      --accent-ink: #dcd7ba;
+      --accent-text: #1f1f28;
+      --accent-soft: color-mix(in srgb, #dcd7ba 12%, #223249);
+      --warning: #c0a36e;
+      --danger: color-mix(in srgb, #c34043, #ffffff 35%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="last-horizon"] {
+      color-scheme: dark;
+      --page: #0c0b0c;
+      --panel: #0c0b0c;
+      --card: #0c0b0c;
+      --field: #090809;
+      --text: #fafcfb;
+      --strong: #e2dddc;
+      --muted: #cfd3cd;
+      --line: #584e51;
+      --soft-line: #584e51;
+      --accent: #b59790;
+      --accent-ink: #b59790;
+      --accent-text: #0c0b0c;
+      --accent-soft: color-mix(in srgb, #b59790 12%, #0c0b0c);
+      --warning: color-mix(in srgb, #6b5e73, #ffffff 15%);
+      --danger: #c38b7b;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="lumon"] {
+      color-scheme: dark;
+      --page: #16242d;
+      --panel: #16242d;
+      --card: #1b2d40;
+      --field: #101b21;
+      --text: #d6e2ee;
+      --strong: #f2fcff;
+      --muted: #d6e2ee;
+      --line: #304860;
+      --soft-line: #243d56;
+      --accent: #8bc9eb;
+      --accent-ink: #8bc9eb;
+      --accent-text: #16242d;
+      --accent-soft: color-mix(in srgb, #8bc9eb 12%, #1b2d40);
+      --warning: #6fa4c9;
+      --danger: color-mix(in srgb, #4d86b0, #ffffff 15%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="lupine"] {
+      color-scheme: light;
+      --page: #fafafa;
+      --panel: #fafafa;
+      --card: #ececec;
+      --field: #ececec;
+      --text: #212121;
+      --strong: #000000;
+      --muted: #424242;
+      --line: #9e9e9e;
+      --soft-line: #d0d0d0;
+      --accent: #3264eb;
+      --accent-ink: color-mix(in srgb, #3264eb, #000000 15%);
+      --accent-text: #fafafa;
+      --accent-soft: color-mix(in srgb, #3264eb 12%, #ececec);
+      --warning: color-mix(in srgb, #026fde, #000000 10%);
+      --danger: color-mix(in srgb, #c900c4, #000000 5%);
+      --shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
+    :root[data-theme="matte-black"] {
+      color-scheme: dark;
+      --page: #121212;
+      --panel: #121212;
+      --card: #1e1e1e;
+      --field: #0d0d0d;
+      --text: #bebebe;
+      --strong: #bebebe;
+      --muted: #8a8a8d;
+      --line: #333333;
+      --soft-line: #2a2a2a;
+      --accent: #e68e0d;
+      --accent-ink: #e68e0d;
+      --accent-text: #121212;
+      --accent-soft: color-mix(in srgb, #e68e0d 12%, #1e1e1e);
+      --warning: color-mix(in srgb, #b91c1c, #ffffff 35%);
+      --danger: color-mix(in srgb, #d35f5f, #ffffff 5%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="miasma"] {
+      color-scheme: dark;
+      --page: #222222;
+      --panel: #222222;
+      --card: #2c2c2c;
+      --field: #191919;
+      --text: #c2c2b0;
+      --strong: #c2c2b0;
+      --muted: color-mix(in srgb, #8a8a7e, #ffffff 10%);
+      --line: #666666;
+      --soft-line: #383838;
+      --accent: #78824b;
+      --accent-ink: color-mix(in srgb, #78824b, #ffffff 30%);
+      --accent-text: #222222;
+      --accent-soft: color-mix(in srgb, #78824b 12%, #2c2c2c);
+      --warning: color-mix(in srgb, #b36d43, #ffffff 20%);
+      --danger: color-mix(in srgb, #685742, #ffffff 35%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="nord"] {
+      color-scheme: dark;
+      --page: #2e3440;
+      --panel: #2e3440;
+      --card: #3b4252;
+      --field: #222730;
+      --text: #d8dee9;
+      --strong: #d8dee9;
+      --muted: #adb5c4;
+      --line: #4c566a;
+      --soft-line: #434c5e;
+      --accent: #81a1c1;
+      --accent-ink: color-mix(in srgb, #81a1c1, #ffffff 35%);
+      --accent-text: #2e3440;
+      --accent-soft: color-mix(in srgb, #81a1c1 12%, #3b4252);
+      --warning: #ebcb8b;
+      --danger: color-mix(in srgb, #bf616a, #ffffff 40%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="osaka-jade"] {
+      color-scheme: dark;
+      --page: #111c18;
+      --panel: #111c18;
+      --card: #23372b;
+      --field: #0c1512;
+      --text: #c1c497;
+      --strong: #f7e8b2;
+      --muted: #d6d5bc;
+      --line: #53685b;
+      --soft-line: #32473b;
+      --accent: #509475;
+      --accent-ink: color-mix(in srgb, #509475, #ffffff 30%);
+      --accent-text: #111c18;
+      --accent-soft: color-mix(in srgb, #509475 12%, #23372b);
+      --warning: color-mix(in srgb, #459451, #ffffff 20%);
+      --danger: color-mix(in srgb, #ff5345, #ffffff 15%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="ristretto"] {
+      color-scheme: dark;
+      --page: #2c2525;
+      --panel: #2c2525;
+      --card: #3d2f2a;
+      --field: #211b1b;
+      --text: #e6d9db;
+      --strong: #e6d9db;
+      --muted: #c3b7b8;
+      --line: #72696a;
+      --soft-line: #403e41;
+      --accent: #f38d70;
+      --accent-ink: color-mix(in srgb, #f38d70, #ffffff 10%);
+      --accent-text: #2c2525;
+      --accent-soft: color-mix(in srgb, #f38d70 12%, #3d2f2a);
+      --warning: #f9cc6c;
+      --danger: #fd6883;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="rose-pine"] {
+      color-scheme: light;
+      --page: #faf4ed;
+      --panel: #faf4ed;
+      --card: #ede7e1;
+      --field: #ede7e1;
+      --text: #575279;
+      --strong: #575279;
+      --muted: color-mix(in srgb, #6e6a86, #000000 5%);
+      --line: #cecacd;
+      --soft-line: #dfdad9;
+      --accent: #56949f;
+      --accent-ink: color-mix(in srgb, #56949f, #000000 35%);
+      --accent-text: #faf4ed;
+      --accent-soft: color-mix(in srgb, #56949f 12%, #ede7e1);
+      --warning: color-mix(in srgb, #ea9d34, #000000 40%);
+      --danger: color-mix(in srgb, #b4637a, #000000 20%);
+      --shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
+    :root[data-theme="solitude"] {
+      color-scheme: dark;
+      --page: #101315;
+      --panel: #101315;
+      --card: #101315;
+      --field: #0c0e10;
+      --text: #cacccc;
+      --strong: #a5aeb4;
+      --muted: #cbc2be;
+      --line: #4b4e55;
+      --soft-line: #343d41;
+      --accent: #798186;
+      --accent-ink: color-mix(in srgb, #798186, #ffffff 10%);
+      --accent-text: #101315;
+      --accent-soft: color-mix(in srgb, #798186 12%, #101315);
+      --warning: #d9dbdc;
+      --danger: color-mix(in srgb, #565d60, #ffffff 25%);
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="tokyo-night"] {
+      color-scheme: dark;
+      --page: #1a1b26;
+      --panel: #1a1b26;
+      --card: #24283b;
+      --field: #13141c;
+      --text: #a9b1d6;
+      --strong: #c0caf5;
+      --muted: #b4bee6;
+      --line: #414868;
+      --soft-line: #292e42;
+      --accent: #7aa2f7;
+      --accent-ink: #7aa2f7;
+      --accent-text: #1a1b26;
+      --accent-soft: color-mix(in srgb, #7aa2f7 12%, #24283b);
+      --warning: #e0af68;
+      --danger: #f7768e;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="vantablack"] {
+      color-scheme: dark;
+      --page: #000000;
+      --panel: #000000;
+      --card: #1a1a1a;
+      --field: #090909;
+      --text: #ffffff;
+      --strong: #ffffff;
+      --muted: #ececec;
+      --line: #7a7a7a;
+      --soft-line: #1a1a1a;
+      --accent: #8d8d8d;
+      --accent-ink: color-mix(in srgb, #8d8d8d, #ffffff 5%);
+      --accent-text: #000000;
+      --accent-soft: color-mix(in srgb, #8d8d8d 12%, #1a1a1a);
+      --warning: #cecece;
+      --danger: #a4a4a4;
+      --shadow: 0 14px 34px rgba(0,0,0,.25);
+    }
+    :root[data-theme="white"] {
+      color-scheme: light;
+      --page: #ffffff;
+      --panel: #ffffff;
+      --card: #f5f5f5;
+      --field: #f5f5f5;
+      --text: #000000;
+      --strong: #000000;
+      --muted: #000000;
+      --line: #808080;
+      --soft-line: #c0c0c0;
+      --accent: #6e6e6e;
+      --accent-ink: color-mix(in srgb, #6e6e6e, #000000 10%);
+      --accent-text: #ffffff;
+      --accent-soft: color-mix(in srgb, #6e6e6e 12%, #f5f5f5);
+      --warning: #4a4a4a;
+      --danger: #2a2a2a;
+      --shadow: 0 14px 34px rgba(0,0,0,.12);
+    }
     :root[data-theme="chatgpt"] {
       color-scheme: light;
       --page: #f9f9f9;
@@ -97,7 +491,7 @@
     .actions { display:flex; align-items:center; gap:12px; white-space:nowrap; }
     .usage-link { border:1px solid var(--accent); border-radius:2px; color:var(--strong); font:600 11px/1.2 var(--mono); letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; text-decoration:none; }
     .usage-link:hover { background:var(--accent-soft); }
-    .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent); cursor:pointer; font-size:20px; line-height:1; padding:0; }
+    .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent-ink); cursor:pointer; font-size:20px; line-height:1; padding:0; }
     .refresh:hover { border-color:var(--accent); background:var(--accent-soft); }
     .refresh:disabled { cursor:wait; opacity:.6; }
     .theme-picker { display:flex; align-items:center; gap:8px; margin:0; color:var(--muted); font:600 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; }
@@ -106,9 +500,9 @@
     .panels { display:grid; gap:16px; }
     .panel { min-width:0; background:var(--card); border:1px solid var(--soft-line); border-radius:3px; padding:26px; }
     .panel-head { align-items:flex-start; }
-    .kicker { text-transform:uppercase; letter-spacing:.11em; color:var(--accent); font:600 10px/1.3 var(--mono); }
+    .kicker { text-transform:uppercase; letter-spacing:.11em; color:var(--accent-ink); font:600 10px/1.3 var(--mono); }
     h1 { margin:7px 0 0; color:var(--strong); font:700 21px/1.2 var(--mono); letter-spacing:.04em; }
-    .badge { border:1px solid var(--accent); border-radius:2px; padding:6px 8px; font:600 11px/1.2 var(--mono); white-space:nowrap; background:var(--accent-soft); color:var(--accent); }
+    .badge { border:1px solid var(--accent); border-radius:2px; padding:6px 8px; font:600 11px/1.2 var(--mono); white-space:nowrap; background:var(--accent-soft); color:var(--accent-ink); }
     .badge.warn { color:var(--warning); background:var(--field); border-color:var(--warning); }
     .badge.neutral { color:var(--muted); background:var(--panel); border-color:var(--line); }
     .meter { display:flex; align-items:baseline; gap:11px; margin:23px 0 12px; }
@@ -135,7 +529,7 @@
     .empty { text-align:center; padding:55px 25px; color:var(--muted); }
     .empty p { margin:8px 0 0; }
     .explain { margin-top:19px; color:var(--muted); font-size:12px; }
-    .explain summary { cursor:pointer; width:max-content; color:var(--accent); font:600 11px/1.4 var(--mono); }
+    .explain summary { cursor:pointer; width:max-content; color:var(--accent-ink); font:600 11px/1.4 var(--mono); }
     .explain p { margin:7px 0 0; max-width:650px; }
     .footer { border-top:1px solid var(--line); padding-top:18px!important; padding-bottom:25px!important; color:var(--muted); font:10px/1.5 var(--mono); }
     :root[data-theme="chatgpt"] .panel { border-radius:16px; box-shadow:var(--shadow); }
@@ -182,7 +576,7 @@
   </style>
 </head>
 <body>
-  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"><option value="gruvbox">Gruvbox</option><option value="flexoki-light">Flexoki Light</option><option value="retro-82">Retro 82</option><option value="chatgpt">ChatGPT</option></select></label></div></div></header>
+  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"></select></label></div></div></header>
   <main class="wrap">
     <div id="panels" class="panels"></div>
     <div id="status" class="statusbar">Loading usage data…</div>
@@ -190,13 +584,15 @@
   </main>
   <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
   <script>
-    const themeColors = { gruvbox: '#282828', 'flexoki-light': '#fffcf0', 'retro-82': '#05182e', chatgpt: '#f9f9f9' };
     const themePicker = document.querySelector('[data-theme-picker]');
+    for (const [value, label] of Object.entries(themes)) {
+      themePicker?.append(new Option(label, value));
+    }
     function setTheme(theme, persist = true) {
-      if (!Object.hasOwn(themeColors, theme)) return;
+      if (!Object.hasOwn(themes, theme)) return;
       document.documentElement.dataset.theme = theme;
       if (themePicker) themePicker.value = theme;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', themeColors[theme]);
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--page').trim());
       if (persist) {
         try { localStorage.setItem('chatgpt-usage-theme', theme); } catch (_) { /* Browsing still works when storage is unavailable. */ }
       }

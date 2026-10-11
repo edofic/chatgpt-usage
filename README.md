@@ -6,7 +6,7 @@ A local dashboard for your Codex allowance: weekly quota remaining, reset time, 
 
 *Screenshots use synthetic data. No real account information is shown.*
 
-The dashboard refreshes when opened, when you return to the tab, and every minute while visible. Automatic checks reuse a result from the past minute; the Refresh button requests a new sample. Browse earlier weeks using the chart selector. Choose Gruvbox, Flexoki Light, Retro 82, or a ChatGPT-inspired light theme; your choice is saved in your browser.
+The dashboard refreshes when opened, when you return to the tab, and every minute while visible. Automatic checks reuse a result from the past minute; the Refresh button requests a new sample. Browse earlier weeks using the chart selector. Choose any of the 22 default themes shipped in Omarchy v4.0.4 or a ChatGPT-inspired light theme; your choice is saved in your browser. Gruvbox is the default. See the [theme palette sources and full list](docs/themes.md).
 
 <details>
 <summary>Light theme and mobile screenshots</summary>
