@@ -93,6 +93,22 @@ The window selector groups small reset-time variations and moving reset estimate
 
 The even-pace line runs from 100% remaining at the inferred window start to 0% at reset, staying at 100% during any preceding idle period. It is a planning reference and does not account for changing allowance, rolling windows, or resets between samples. Bursts between samples may be missed. Failed collection records a status code and leaves previous samples visible; a manual collector run exits nonzero on failure.
 
+## Compare subscription plans
+
+The **Compare plans** panel uses account-wide weekly quota readings to estimate how another allowance would handle your recorded workload, including usage from other devices. It compares weekly capacity separately from five-hour session pressure and recommends the smallest tested allowance that fits the observed increases with your chosen reserve. It does not change your subscription.
+
+Choose a history period and weekly reserve, then inspect Plus or one of three editable Pro profiles. Under **Allowance assumptions**, set your recorded plan's allowance relative to Plus, the Plus five-hour allowance as a percentage of its week, and the Pro multiples to compare. Initial values are a user-supplied calibration of 5× Plus for the recorded plan and 15% of a Plus week per five-hour block; Pro comparison profiles start at 5×, 10×, and 25× without a five-hour cap. These are comparison assumptions, not detected billing tiers or guaranteed current entitlements. Check [OpenAI's current guidance](https://learn.chatgpt.com/docs/pricing) and your account's actual allowances. Use a history period during which your recorded allowance size stayed consistent.
+
+Under **Exclude exceptional usage**, review the busiest days or annotate a precise range with a reason such as a deliberate burn before an announced reset. Nothing is excluded automatically. Increases are attributed to their collection timestamps and exclusions use half-open ranges (start included, end excluded). Original history is preserved, and excluded days remain in the observation period. Whole-day exclusions use local midnight boundaries, including daylight-saving changes. Settings, selected plan, and annotations are stored in this browser, separately for each account and quota bucket; they do not sync across devices.
+
+The comparison uses a single weekly bucket for the latest account, reconstructs increases across reset boundaries, excludes the initial pre-existing balance, and avoids counting downward corrections as new work. Weekly fit evaluates complete rolling 168-hour spans at every observed increase and at the period boundaries. The chart shows daily spans, the latest complete span, and the busiest span. Fewer than seven days or no retained consumption yields no recommendation.
+
+The schedule replay begins with fresh weekly and five-hour allowances, starts each subsequent window on the first observed activity after the previous one expires, and applies both caps to the same admitted work. The reserve reduces usable weekly capacity. Historical promotional/early resets are ignored. Work that would exceed a cap is reported as needing extra allowance or rescheduling; it is not queued into later windows. Five-hour pressure is also evaluated independently of weekly exhaustion so you can see burst limits even on a plan with insufficient weekly capacity.
+
+These are approximate comparisons of **observed consumption**, not message counts, invoices, exact lockout predictions, or model attribution. Collection gaps, rounding, unknown first-request times, unobserved resets, and usage after an exhausted meter can limit accuracy. The panel reports gaps and stale data. API token prices and partial local session logs are not used to infer subscription quota.
+
+Run the standard-library test suite with `python3 -m unittest discover -s tests -v`. It covers reset reconstruction, concurrent limit accounting, rolling weekly peaks, exclusions, daylight-saving boundaries, validation, and the HTTP routes without needing network access or a Codex login.
+
 ## License
 
 Copyright 2026 Andraz Bajt. Licensed under the [Apache License 2.0](LICENSE).

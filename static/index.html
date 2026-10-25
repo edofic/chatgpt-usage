@@ -37,6 +37,8 @@
     } catch (_) { document.documentElement.dataset.theme = 'gruvbox'; }
   </script>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/rightsizing.css">
+  <script defer src="/rightsizing.js"></script>
   <title>ChatGPT Usage</title>
   <style>
     :root {
@@ -581,6 +583,7 @@
     <div id="panels" class="panels"></div>
     <div id="status" class="statusbar">Loading usage data…</div>
     <details class="explain"><summary>About this chart</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through the reported week. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
+    <section id="rightsizing" class="panel rightsizing" aria-label="Compare subscription plans"></section>
   </main>
   <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
   <script>
@@ -713,6 +716,7 @@
       if (!last) status.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
       else if (!last.ok) { status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.`; status.classList.add('error'); }
       else { status.classList.remove('error'); status.textContent = `Checked ${dateTime(last.checked_at)} · auto-refreshes while visible`; }
+      window.dispatchEvent(new Event('usage:updated'));
     }
 
     async function loadCached() {

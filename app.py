@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import rightsizing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -281,6 +282,15 @@ def history(source_key, reset):
         connection.close()
 
 
+def rightsizing_report(config=None):
+    connection = database()
+    try:
+        return rightsizing.compare(rightsizing.evidence(connection, usage_cycles),
+                                  {} if config is None else config, int(time.time()))
+    finally:
+        connection.close()
+
+
 class Handler(BaseHTTPRequestHandler):
     def send_json(self, value, status=200):
         payload = json.dumps(value, separators=(",", ":")).encode()
@@ -298,6 +308,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"ok": True})
         elif path.path == "/api/dashboard":
             self.send_json(dashboard())
+        elif path.path == "/api/rightsizing":
+            self.send_json(rightsizing_report())
         elif path.path == "/api/series":
             query = parse_qs(path.query)
             source = query.get("source", [""])[0]
@@ -306,11 +318,13 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"error": "invalid request"}, 400)
             else:
                 self.send_json({"samples": history(source, int(reset))})
-        elif path.path in ("/", "/index.html", "/icon.svg"):
-            filename = "icon.svg" if path.path == "/icon.svg" else "index.html"
+        elif path.path in ("/", "/index.html", "/icon.svg", "/rightsizing.js", "/rightsizing.css"):
+            filename = "index.html" if path.path == "/" else path.path[1:]
             payload = (ROOT / "static" / filename).read_bytes()
             self.send_response(200)
-            self.send_header("Content-Type", "image/svg+xml" if filename.endswith(".svg") else "text/html; charset=utf-8")
+            types = {".svg": "image/svg+xml", ".js": "text/javascript; charset=utf-8",
+                     ".css": "text/css; charset=utf-8", ".html": "text/html; charset=utf-8"}
+            self.send_header("Content-Type", types[Path(filename).suffix])
             self.send_header("Content-Length", str(len(payload)))
             self.send_header("Cache-Control", "no-cache")
             self.send_header("X-Content-Type-Options", "nosniff")
@@ -321,6 +335,18 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         request = urlparse(self.path)
+        if request.path == "/api/rightsizing":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if not 0 < length <= 65536:
+                    raise ValueError("Comparison request must be between 1 and 65536 bytes.")
+                config = json.loads(self.rfile.read(length))
+                report = rightsizing_report(config)
+            except (ValueError, UnicodeDecodeError) as exc:
+                self.send_json({"error": str(exc)}, 400)
+                return
+            self.send_json(report)
+            return
         if request.path != "/api/refresh":
             self.send_error(404)
             return
