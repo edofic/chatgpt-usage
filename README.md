@@ -1,6 +1,6 @@
 # ChatGPT Usage
 
-A local dashboard for your Codex allowance: weekly quota remaining, reset time, usage history, and an even-pace guide. It reads the limits reported by Codex app-server using your existing ChatGPT login and stores snapshots in SQLite. It also ingests local Codex sessions for a partial model and daily token breakdown, with free auto-review usage shown separately.
+A local dashboard for your Codex allowance: weekly quota remaining, reset time, usage history, and an even-pace guide. It reads the limits reported by Codex app-server using your existing ChatGPT login and stores snapshots in SQLite.
 
 ![Weekly allowance and usage history in Gruvbox](docs/screenshots/gruvbox.png)
 
@@ -63,7 +63,6 @@ The standalone server binds only to loopback and has no built-in authentication.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `CODEX_BIN` | `codex` | Codex executable name or absolute path. |
-| `CODEX_SESSIONS_ROOT` | `$CODEX_HOME/sessions`, otherwise `~/.codex/sessions` | Local session JSONL directory, read only. Set an absolute path if the service has a different home. |
 | `DATABASE_PATH` | `data/usage.sqlite` beside `app.py` | SQLite history database; its parent directory is created automatically. |
 | `PORT` | `8000` | Local HTTP port; mini-cloud supplies its assigned port. |
 
@@ -88,42 +87,11 @@ Open <http://127.0.0.1:8000>. The demo creates a temporary database with a curre
 
 The collector calls [`account/rateLimits/read`](https://learn.chatgpt.com/docs/app-server). This dashboard shows Codex allowance reported by that endpoint; it does not track every ChatGPT message limit. The web view focuses on the weekly quota, while the collector also retains other reported windows, including five-hour limits.
 
-Quota history stores account identifiers, bucket metadata, percentages, and timestamps. Local history stores token counters, model/provider names, event dates, hashed identifiers for deduplication, and file checkpoints. No conversation text, tool content, credentials, raw logs, or raw RPC replies are stored or printed. The database, SQLite sidecar files, and environment files are ignored by Git; mini-cloud also ignores `data/` when watching for changes. History is retained until you delete it. Stop the app and collector before deleting the database and its sidecar files.
+Only account identifiers, bucket metadata, percentages, and timestamps are stored. Credentials and raw RPC replies are not saved or printed by this app. The database, SQLite sidecar files, and environment files are ignored by Git; mini-cloud also ignores `data/` when watching for changes. History is retained until you delete it. Stop the app and collector before deleting the database and its sidecar files.
 
 The window selector groups small reset-time variations and moving reset estimates while an allowance is unused into one observed window. Raw timestamps remain stored, and the chart includes idle samples before activity anchors the window's start.
 
 The even-pace line runs from 100% remaining at the inferred window start to 0% at reset, staying at 100% during any preceding idle period. It is a planning reference and does not account for changing allowance, rolling windows, or resets between samples. Bursts between samples may be missed. Failed collection records a status code and leaves previous samples visible; a manual collector run exits nonzero on failure.
-
-## Local model activity
-
-**LOCAL MACHINE sessions only.** The model panel shows 7-day, 30-day, or all-history token totals and daily model rows, grouped by UTC day. Account-wide allowance remains authoritative across all devices. Local logs can span accounts or providers and are not joined to the currently logged-in account. They cannot exactly allocate subscription quota burn to models; no API price or cost equivalence is assumed. `codex-auto-review` models are free and excluded from the main totals, with their own expandable breakdown. Unknown models remain explicitly unknown.
-
-`collect` ingests sessions independently of whether the account RPC succeeds. It runs through the existing cron and browser refresh path. GET requests only read SQLite. Files are discovered on collection, unchanged files are skipped, and appended bytes resume from durable offsets. The first backfill gets eight seconds per run; remaining files continue on subsequent checks. Browser automatic refreshes throttle scans to once per minute. A partial trailing JSONL line is retried later. Missing/unreadable directories or files leave previous history visible and report coverage status. Deleted or archived source files do not erase already ingested history; the default root does not discover `archived_sessions` or other devices.
-
-For an offline backfill without invoking Codex or checking account allowance:
-
-```sh
-python3 app.py ingest
-```
-
-Repeat while the status is `backfilling`, or let scheduled collection continue it. The local status reports the observed event date range, file count, scan time, and pending/unreadable files. `CODEX_SESSIONS_ROOT` can select a different local root; previously ingested events remain retained and deduplicated.
-
-Ingestion uses the internal rollout format, so future Codex changes may require updates:
-
-- Newer logs have `token_usage_record` entries with response IDs and per-response counters. IDs deduplicate copied/resumed/forked history. After the first such record in a file, `token_count` mirrors are ignored: observed mirrors can lag or use different cumulative baselines.
-- Older `event_msg/token_count` snapshots contribute only matching cumulative deltas and `last_token_usage`, never repeated cumulative totals. The first snapshot contributes at most its last response. A reset counts only when the new total equals that last response. Ambiguous gaps are skipped and reported as ingestion notices. Snapshot timestamps and counters form global deduplication fingerprints for copied history.
-- The first session metadata identifies a rollout; embedded parent metadata in forks does not replace it. Inherited usage predating a fork is skipped. Models follow `turn_context`; response records with a mismatched turn are attributed to `unknown`. Models are logged context labels, not server billing attribution or proof against unlogged model rerouting.
-- Total tokens are **input + output**. Cached/cache-write input are subsets of input, and reasoning is a subset of output. They are displayed separately without adding them to the total again.
-
-Checkpoints tolerate truncation/replacement and replay with event deduplication. Rollouts are expected to be append-only: arbitrary edits in the middle of a growing file are not fully detected. Unsupported, malformed, oversized, or incomplete usage records are skipped conservatively. Such gaps, missing logs, and activity elsewhere mean these totals may undercount. Logs need only be readable; this app never modifies them. Private database state remains under ignored `data/` and is excluded from mini-cloud restart watching.
-
-Run the stdlib tests with the existing Python runtime (on NixOS, `nix shell nixpkgs#python3` if needed):
-
-```sh
-python3 -m unittest discover -s tests -v
-```
-
-The synthetic demo also includes model/day and auto-review rows, and never scans real session logs.
 
 ## License
 
