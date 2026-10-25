@@ -95,7 +95,9 @@ The even-pace line runs from 100% remaining at the inferred window start to 0% a
 
 ## Compare subscription plans
 
-The **Compare plans** panel uses account-wide weekly quota readings to estimate how another allowance would handle your recorded workload, including usage from other devices. It compares weekly capacity separately from five-hour session pressure and recommends the smallest tested allowance that fits the observed increases with your chosen reserve. It does not change your subscription.
+Open **Compare plans** from the compact link in the top bar. The panel is hidden and its analysis is not loaded until opened; **Close** returns to the dashboard. A direct `#rightsizing` link opens it immediately.
+
+The panel uses account-wide weekly quota readings to estimate how another allowance would handle your recorded workload, including usage from other devices. It compares weekly capacity separately from five-hour session pressure and recommends the smallest tested allowance that fits the observed increases with your chosen reserve. It does not change your subscription.
 
 Choose a history period and weekly reserve, then inspect Plus or one of three editable Pro profiles. Under **Allowance assumptions**, set your recorded plan's allowance relative to Plus, the Plus five-hour allowance as a percentage of its week, and the Pro multiples to compare. Initial values are a user-supplied calibration of 5× Plus for the recorded plan and 15% of a Plus week per five-hour block; Pro comparison profiles start at 5×, 10×, and 25× without a five-hour cap. These are comparison assumptions, not detected billing tiers or guaranteed current entitlements. Check [OpenAI's current guidance](https://learn.chatgpt.com/docs/pricing) and your account's actual allowances. Use a history period during which your recorded allowance size stayed consistent.
 

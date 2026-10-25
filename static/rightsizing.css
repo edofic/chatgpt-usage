@@ -1,4 +1,5 @@
 .rightsizing { margin-top:22px; }
+.rs-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
 .rightsizing h2 { margin:7px 0 0; color:var(--strong); font:700 21px/1.3 var(--mono); }
 .rightsizing h3 { margin:0 0 10px; font:600 13px/1.4 var(--mono); color:var(--strong); }
 .rightsizing p { margin:9px 0; }

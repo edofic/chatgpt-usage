@@ -4,8 +4,8 @@
   const root = document.getElementById('rightsizing');
   if (!root) return;
   root.innerHTML = `
-    <div class="kicker">Subscription fit · all devices</div>
-    <h2>Compare plans</h2>
+    <div class="rs-heading"><div><div class="kicker">Subscription fit · all devices</div>
+    <h2>Compare plans</h2></div><button type="button" id="rs-close">Close</button></div>
     <p class="rs-subtitle">Would another plan cover your work, when you want to do it? Replay your recorded allowance usage with different weekly and five-hour limits.</p>
     <div class="rs-controls"><label>History<select id="rs-period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option><option value="0">All history</option></select></label><label>Keep in reserve<select id="rs-reserve"><option value="0">0% · use it all</option><option value="10" selected>10% headroom</option><option value="20">20% headroom</option><option value="30">30% headroom</option></select></label></div>
     <details class="rs-settings"><summary>Allowance assumptions</summary>
@@ -173,6 +173,30 @@
       report=next;config=next.settings;render();
     } catch (error) { if (mine===sequence) { $('feedback').textContent=`Could not load comparison: ${error.message}`;const retry=document.createElement('button');retry.textContent='Retry';retry.onclick=initialize;$('feedback').append(' ',retry); } }
   }
-  window.addEventListener('usage:updated',()=>{if(config&&scope){clearTimeout(timer);timer=setTimeout(update,300);}});
-  initialize();
+  const link=document.getElementById('compare-plans');
+  let started=false;
+  function show(open, focus=false) {
+    root.hidden=!open;
+    link?.setAttribute('aria-expanded',String(open));
+    if (open) {
+      if (!started) { started=true;initialize(); }
+      else if (config&&scope) update();
+      if (focus) { root.scrollIntoView({block:'start'});root.focus({preventScroll:true}); }
+    } else {
+      clearTimeout(timer);
+      if (focus) link?.focus();
+    }
+  }
+  link?.addEventListener('click',event=>{
+    event.preventDefault();
+    history.replaceState(null,'',`${location.pathname}${location.search}#rightsizing`);
+    show(true,true);
+  });
+  $('close').addEventListener('click',()=>{
+    if(location.hash==='#rightsizing') history.replaceState(null,'',`${location.pathname}${location.search}`);
+    show(false,true);
+  });
+  window.addEventListener('hashchange',()=>show(location.hash==='#rightsizing'));
+  window.addEventListener('usage:updated',()=>{if(!root.hidden&&config&&scope){clearTimeout(timer);timer=setTimeout(update,300);}});
+  show(location.hash==='#rightsizing');
 })();

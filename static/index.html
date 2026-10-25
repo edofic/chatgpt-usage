@@ -491,6 +491,8 @@
     .brand { display:flex; align-items:center; gap:11px; color:var(--strong); text-decoration:none; font:700 19px/1.1 var(--mono); letter-spacing:.11em; text-transform:uppercase; }
     .brand img { display:block; width:31px; height:31px; border-radius:4px; }
     .actions { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+    .compare-link { margin-left:auto; color:var(--accent-ink); font:600 11px/1.4 var(--mono); white-space:nowrap; text-decoration:none; }
+    .compare-link:hover { text-decoration:underline; text-underline-offset:3px; }
     .usage-link { border:1px solid var(--accent); border-radius:2px; color:var(--strong); font:600 11px/1.2 var(--mono); letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; text-decoration:none; }
     .usage-link:hover { background:var(--accent-soft); }
     .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent-ink); cursor:pointer; font-size:20px; line-height:1; padding:0; }
@@ -578,12 +580,12 @@
   </style>
 </head>
 <body>
-  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"></select></label></div></div></header>
+  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><a id="compare-plans" class="compare-link" href="#rightsizing" aria-controls="rightsizing" aria-expanded="false">Compare plans</a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"></select></label></div></div></header>
   <main class="wrap">
     <div id="panels" class="panels"></div>
     <div id="status" class="statusbar">Loading usage data…</div>
     <details class="explain"><summary>About this chart</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through the reported week. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
-    <section id="rightsizing" class="panel rightsizing" aria-label="Compare subscription plans"></section>
+    <section id="rightsizing" class="panel rightsizing" aria-label="Compare subscription plans" tabindex="-1" hidden></section>
   </main>
   <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
   <script>
