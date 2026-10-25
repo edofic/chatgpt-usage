@@ -14,10 +14,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import local_usage
+
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "usage.sqlite"))
 CODEX_BIN = os.environ.get("CODEX_BIN", "codex")
+SESSIONS_ROOT = Path(os.environ.get("CODEX_SESSIONS_ROOT",
+    Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")) / "sessions")).expanduser()
 KINDS = {300: "5h", 10080: "week"}
 RESET_TOLERANCE = 60  # Reported reset timestamps can vary by a few seconds.
 
@@ -56,6 +60,7 @@ def database():
             sample_count INTEGER NOT NULL DEFAULT 0
         );
     """)
+    local_usage.initialize(connection)
     return connection
 
 
@@ -151,18 +156,23 @@ def parsed_samples(result, sampled_at):
     return rows
 
 
-def collect(min_age=0):
+def collect(min_age=0, local_only=False):
     """Serialize cron and browser refreshes, and reuse a recent result."""
     DB_PATH.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     with (DB_PATH.parent / "collect.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        return collect_locked(min_age)
+        return collect_locked(min_age, local_only)
 
 
-def collect_locked(min_age):
+def collect_locked(min_age, local_only=False):
     now = int(time.time())
     connection = database()
     try:
+        local_run = local_usage.ingest(connection, SESSIONS_ROOT, min_age=min_age)
+        if local_only:
+            print(f"local ingestion: {local_run['status']}; {local_run['files_seen']} file(s), "
+                  f"{local_run['events_added']} new event(s)")
+            return int(local_run["status"] in ("root_missing", "root_unreadable", "partial"))
         if min_age:
             latest = connection.execute("""SELECT checked_at FROM collection_runs
                 ORDER BY id DESC LIMIT 1""").fetchone()
@@ -264,7 +274,8 @@ def dashboard():
                 item["cycles"] = [cycle["resets_at"] for cycle in reversed(cycles[-16:])]
                 item["samples"] = cycles[-1]["samples"]
                 windows.append(item)
-        return {"last_run": run, "server_time": int(time.time()), "windows": windows}
+        return {"last_run": run, "server_time": int(time.time()), "windows": windows,
+                "local_usage": local_usage.summary(connection)}
     finally:
         connection.close()
 
@@ -339,7 +350,7 @@ def serve():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in ("serve", "collect"):
-        print("usage: app.py {serve|collect}", file=sys.stderr)
+    if len(sys.argv) != 2 or sys.argv[1] not in ("serve", "collect", "ingest"):
+        print("usage: app.py {serve|collect|ingest}", file=sys.stderr)
         sys.exit(2)
-    sys.exit(collect() if sys.argv[1] == "collect" else serve())
+    sys.exit(serve() if sys.argv[1] == "serve" else collect(local_only=sys.argv[1] == "ingest"))

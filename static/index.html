@@ -523,6 +523,21 @@
     .metric small { display:block; color:var(--muted); font:11px/1.3 var(--mono); }
     .metric b { display:block; color:var(--strong); font:600 13px/1.4 var(--mono); margin-top:5px; }
     .panel-foot { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font:11px/1.4 var(--mono); margin-top:15px; }
+    h2 { margin:7px 0 0; color:var(--strong); font:700 21px/1.2 var(--mono); }
+    .coverage-note,.local-status,.token-note { color:var(--muted); font-size:12px; line-height:1.6; }
+    .coverage-note { margin:16px 0; }
+    .local-total { margin:18px 0 8px; color:var(--strong); font:700 27px/1.2 var(--mono); }
+    .local-total small { color:var(--muted); font:12px/1.4 var(--mono); }
+    .table-scroll { overflow-x:auto; margin-top:12px; }
+    .token-table { width:100%; border-collapse:collapse; font:11px/1.5 var(--mono); }
+    .token-table caption { text-align:left; color:var(--strong); font-weight:600; padding-bottom:8px; }
+    .token-table th,.token-table td { text-align:right; padding:10px 7px; border-bottom:1px solid var(--soft-line); white-space:nowrap; }
+    .token-table th { color:var(--muted); font-weight:500; }
+    .token-table th:first-child,.token-table td:first-child { text-align:left; padding-left:0; }
+    .token-table td:first-child { color:var(--strong); }
+    .local-details { margin-top:18px; }
+    .local-details > summary { cursor:pointer; color:var(--accent-ink); font:600 12px/1.5 var(--mono); }
+    .local-range { display:grid; gap:6px; color:var(--muted); font:11px/1.3 var(--mono); }
     .statusbar { margin-top:13px; color:var(--muted); font:11px/1.5 var(--mono); }
     .statusbar strong { color:var(--strong); }
     .error { color:var(--danger)!important; }
@@ -582,7 +597,7 @@
     <div id="status" class="statusbar">Loading usage data…</div>
     <details class="explain"><summary>About this chart</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through the reported week. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
   </main>
-  <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
+  <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Allowance times use your time zone · token days use UTC</span></footer>
   <script>
     const themePicker = document.querySelector('[data-theme-picker]');
     for (const [value, label] of Object.entries(themes)) {
@@ -604,6 +619,8 @@
     const status = document.getElementById('status');
     let selectedReset = null;
     let lastData = null;
+    let localRange = 30;
+    const localExpanded = {daily:false, review:false};
     const dateTime = seconds => new Date(seconds * 1000).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
     const percent = number => `${Math.round(number)}%`;
     const duration = seconds => {
@@ -662,12 +679,12 @@
       const remaining = 100 - window.used_percent, currentPace = pace(window);
       const article = document.createElement('article');
       article.className = 'panel';
-      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Codex · weekly</div><h1>Weekly allowance</h1></div><span class="badge"></span></div>
+      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Account-wide · Codex · weekly</div><h1>Weekly allowance</h1></div><span class="badge"></span></div>
         <div class="meter"><strong></strong><span>remaining</span></div><div class="bar"><i></i></div>
         <div class="chart-head"><b>Burndown</b><select aria-label="Choose usage window"></select></div><div class="chart"></div>
         <div class="legend"><span><i class="swatch"></i> Actual</span><span><i class="swatch guide"></i> Even pace</span></div>
         <div class="metrics"><div class="metric"><small>Resets</small><b class="reset"></b></div><div class="metric"><small>Time left</small><b class="time-left"></b></div></div>
-        <div class="panel-foot"><span class="pace-detail"></span></div>`;
+        <div class="panel-foot"><span class="pace-detail"></span><span>All devices · authoritative allowance</span></div>`;
       article.querySelector('.meter strong').textContent = percent(remaining);
       article.querySelector('.badge').textContent = currentPace.label;
       article.querySelector('.badge').classList.add(currentPace.tone);
@@ -704,11 +721,115 @@
       return article;
     }
 
+    const tokenNumber = value => new Intl.NumberFormat().format(value);
+    function tokenTable(rows, daily = false) {
+      const scroll = document.createElement('div');
+      scroll.className = 'table-scroll';
+      scroll.tabIndex = 0;
+      scroll.setAttribute('role', 'region');
+      scroll.setAttribute('aria-label', daily ? 'Daily token breakdown, scroll horizontally for all columns' : 'Model token breakdown, scroll horizontally for all columns');
+      const table = document.createElement('table');
+      table.className = 'token-table';
+      const caption = table.createCaption();
+      caption.textContent = daily ? 'Tokens by day and model · UTC' : 'Tokens by model';
+      const fields = ['model', 'total_tokens', 'input_tokens', 'cached_input_tokens', 'output_tokens', 'reasoning_output_tokens'];
+      const labels = ['Model', 'Total', 'Input', 'Cached¹', 'Output', 'Reasoning²'];
+      if (rows.some(row => row.cache_write_input_tokens)) {
+        fields.push('cache_write_input_tokens'); labels.push('Cache writes¹');
+      }
+      if (daily) { fields.unshift('day'); labels.unshift('Day'); }
+      const heading = table.createTHead().insertRow();
+      for (const label of labels) {
+        const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; heading.append(th);
+      }
+      const body = table.createTBody();
+      for (const row of rows) {
+        const tr = body.insertRow();
+        for (const field of fields) {
+          const cell = tr.insertCell();
+          cell.textContent = field === 'model' ? row.model + (row.provider === 'openai' ? '' : ` (${row.provider})`)
+            : field === 'day' ? row.day : tokenNumber(row[field]);
+        }
+      }
+      scroll.append(table);
+      return scroll;
+    }
+
+    function localPanel(local) {
+      const article = document.createElement('article');
+      article.className = 'panel';
+      article.innerHTML = `<div class="panel-head"><div><div class="kicker">LOCAL MACHINE sessions only</div><h2>Model activity</h2></div>
+        <label class="local-range">Token period<select aria-label="Local token period"><option value="7">Last 7 days (UTC)</option><option value="30">Last 30 days (UTC)</option><option value="0">All local history</option></select></label></div>
+        <p class="coverage-note">Partial coverage from this machine. Account-wide allowance above covers all devices. Local tokens cannot exactly allocate quota consumption to models.</p>
+        <div class="local-body"></div><p class="local-status"></p>`;
+      const select = article.querySelector('select');
+      select.value = String(localRange);
+      select.addEventListener('change', () => {
+        localRange = Number(select.value);
+        article.replaceWith(localPanel(local));
+      });
+      const now = new Date();
+      const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - localRange + 1)).toISOString().slice(0, 10);
+      const rows = local.daily.filter(row => !localRange || row.day >= cutoff);
+      const models = rows.filter(row => row.category !== 'auto_review');
+      const free = rows.filter(row => row.category === 'auto_review');
+      const body = article.querySelector('.local-body');
+      const total = models.reduce((sum, row) => sum + row.total_tokens, 0);
+      const heading = document.createElement('p'); heading.className = 'local-total';
+      heading.textContent = `${tokenNumber(total)} `;
+      const suffix = document.createElement('small'); suffix.textContent = 'model tokens · free auto-review excluded'; heading.append(suffix); body.append(heading);
+      const aggregate = items => {
+        const map = new Map();
+        for (const item of items) {
+          const key = JSON.stringify([item.model, item.provider]);
+          if (!map.has(key)) map.set(key, {...item, ...Object.fromEntries(['total_tokens', 'input_tokens', 'cached_input_tokens', 'cache_write_input_tokens', 'output_tokens', 'reasoning_output_tokens'].map(k => [k, 0]))});
+          const row = map.get(key);
+          for (const field of ['total_tokens', 'input_tokens', 'cached_input_tokens', 'cache_write_input_tokens', 'output_tokens', 'reasoning_output_tokens']) row[field] += item[field];
+        }
+        return [...map.values()].sort((a,b) => b.total_tokens - a.total_tokens);
+      };
+      if (models.length) body.append(tokenTable(aggregate(models)));
+      else { const empty = document.createElement('p'); empty.className = 'token-note'; empty.textContent = 'No model tokens recorded in this period.'; body.append(empty); }
+      const note = document.createElement('p'); note.className = 'token-note';
+      note.textContent = 'Total = input + output. ¹ Cached input and cache writes are included in input. ² Reasoning is included in output. Tokens are not a cost estimate or a subscription quota measure.';
+      body.append(note);
+      function detail(key, title, content) {
+        const details = document.createElement('details'); details.className = 'local-details';
+        details.open = localExpanded[key];
+        details.addEventListener('toggle', () => { if (details.isConnected) localExpanded[key] = details.open; });
+        const summary = document.createElement('summary'); summary.textContent = title;
+        details.append(summary, content); body.append(details);
+      }
+      if (models.length) detail('daily', 'Daily breakdown (UTC)', tokenTable(models, true));
+      if (free.length) detail('review', `Free auto-review · ${tokenNumber(free.reduce((sum,row) => sum + row.total_tokens, 0))} tokens`, tokenTable(aggregate(free)));
+      const notices = Object.values(local.warnings).reduce((sum, count) => sum + count, 0);
+      if (notices) {
+        const text = document.createElement('p'); text.className = 'token-note';
+        text.textContent = 'Some historical snapshots were incomplete or ambiguous. Only safely attributable usage is counted, so local totals may undercount.';
+        body.append(text);
+      }
+      const run = local.last_run, coverage = local.coverage;
+      const messages = [];
+      if (coverage.first_day) messages.push(`Observed ${coverage.first_day} – ${coverage.last_day} (UTC)`);
+      if (!run) messages.push('Waiting for the first local scan.');
+      else {
+        messages.push(`${run.files_seen} session files found · scanned ${dateTime(run.checked_at)}`);
+        if (run.status === 'root_missing') messages.push('Local session folder not found; previous history is retained.');
+        if (run.status === 'root_unreadable') messages.push('Local session folder could not be read; previous history is retained.');
+        if (run.files_unreadable) messages.push(`${run.files_unreadable} files or folders could not be read.`);
+        if (run.pending_files) messages.push('Backfill in progress; remaining files continue on the next check.');
+        if (Date.now()/1000 - run.checked_at > 1800) messages.push('Local scan is stale.');
+      }
+      article.querySelector('.local-status').textContent = messages.join(' · ');
+      return article;
+    }
+
     function render(data) {
       lastData = data;
       panels.replaceChildren();
       const weekly = data.windows.find(w => w.limit_id === 'codex' && w.window_kind === 'week') || data.windows.find(w => w.window_kind === 'week');
       panels.append(weekly ? panel(weekly) : emptyPanel());
+      if (data.local_usage) panels.append(localPanel(data.local_usage));
       const last = data.last_run;
       if (!last) status.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
       else if (!last.ok) { status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.`; status.classList.add('error'); }
