@@ -68,43 +68,61 @@ def read_limits():
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            text=True,
-            bufsize=1,
+            bufsize=0,
         )
     except OSError as exc:
         raise CollectionError("codex_unavailable") from exc
     try:
-        requests = (
-            {"method": "initialize", "id": 1, "params": {"clientInfo": {
-                "name": "chatgpt_usage", "title": "ChatGPT Usage", "version": "0.1.0"}}},
-            {"method": "initialized", "params": {}},
-            {"method": "account/rateLimits/read", "id": 2},
-        )
-        for request in requests:
-            process.stdin.write(json.dumps(request) + "\n")
-        process.stdin.flush()
         deadline = time.monotonic() + 25
-        while time.monotonic() < deadline:
-            ready, _, _ = select.select([process.stdout], [], [], min(1, deadline - time.monotonic()))
-            if not ready:
-                if process.poll() is not None:
-                    raise CollectionError("codex_exited")
-                continue
-            line = process.stdout.readline()
-            if not line:
-                raise CollectionError("codex_exited")
+        buffer = b""
+
+        def send(request):
             try:
-                message = json.loads(line)
-            except json.JSONDecodeError as exc:
-                raise CollectionError("invalid_response") from exc
-            if message.get("id") == 2:
+                process.stdin.write((json.dumps(request) + "\n").encode())
+                process.stdin.flush()
+            except BrokenPipeError as exc:
+                raise CollectionError("codex_exited") from exc
+
+        def response(request_id, error_status):
+            nonlocal buffer
+            while time.monotonic() < deadline:
+                # Drain complete buffered messages before waiting on the pipe.
+                # A notification and reply can arrive in a single read.
+                if b"\n" not in buffer:
+                    ready, _, _ = select.select(
+                        [process.stdout], [], [], min(1, max(0, deadline - time.monotonic())))
+                    if not ready:
+                        if process.poll() is not None:
+                            raise CollectionError("codex_exited")
+                        continue
+                    chunk = os.read(process.stdout.fileno(), 65536)
+                    if not chunk:
+                        raise CollectionError("codex_exited")
+                    buffer += chunk
+                    continue
+                line, buffer = buffer.split(b"\n", 1)
+                try:
+                    message = json.loads(line)
+                except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                    raise CollectionError("invalid_response") from exc
+                if not isinstance(message, dict):
+                    raise CollectionError("invalid_response")
+                if message.get("id") != request_id:
+                    continue
                 if "error" in message:
-                    raise CollectionError("rate_limits_unavailable")
+                    raise CollectionError(error_status)
                 result = message.get("result")
                 if not isinstance(result, dict):
                     raise CollectionError("invalid_response")
                 return result
-        raise CollectionError("timeout")
+            raise CollectionError("timeout")
+
+        send({"method": "initialize", "id": 1, "params": {"clientInfo": {
+            "name": "chatgpt_usage", "title": "ChatGPT Usage", "version": "0.1.0"}}})
+        response(1, "initialization_failed")
+        send({"method": "initialized", "params": {}})
+        send({"method": "account/rateLimits/read", "id": 2})
+        return response(2, "rate_limits_unavailable")
     finally:
         process.terminate()
         try:
@@ -112,6 +130,8 @@ def read_limits():
         except subprocess.TimeoutExpired:
             process.kill()
             process.wait()
+        process.stdin.close()
+        process.stdout.close()
 
 
 def parsed_samples(result, sampled_at):

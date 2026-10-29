@@ -1,6 +1,6 @@
 # ChatGPT Usage
 
-A local dashboard for your Codex allowance: weekly quota remaining, reset time, usage history, and an even-pace guide. It reads the limits reported by Codex app-server using your existing ChatGPT login and stores snapshots in SQLite.
+A local dashboard for your Codex allowance: weekly and five-hour quota remaining, reset times, usage history, and an even-pace guide. It reads the limits reported by Codex app-server using your existing ChatGPT login and stores snapshots in SQLite.
 
 ![Weekly allowance and usage history in Gruvbox](docs/screenshots/gruvbox.png)
 
@@ -85,7 +85,9 @@ Open <http://127.0.0.1:8000>. The demo creates a temporary database with a curre
 
 ## Data and limits
 
-The collector calls [`account/rateLimits/read`](https://learn.chatgpt.com/docs/app-server). This dashboard shows Codex allowance reported by that endpoint; it does not track every ChatGPT message limit. The web view focuses on the weekly quota, while the collector also retains other reported windows, including five-hour limits.
+The collector calls [`account/rateLimits/read`](https://learn.chatgpt.com/docs/app-server). This dashboard shows Codex allowance reported by that endpoint; it does not track every ChatGPT message limit. The web view shows weekly and five-hour windows when reported, each with its own history selector. Windows are identified by their reported duration, since a plan change can move the weekly allowance between the primary and secondary slots. Other reported durations are retained by the collector.
+
+If a refresh fails with `rate_limits_unavailable`, previous samples remain visible. Try Refresh again; a failure just after changing plans may be temporary. If failures persist, run `codex login` as the user running the collector, then refresh the dashboard.
 
 Only account identifiers, bucket metadata, percentages, and timestamps are stored. Credentials and raw RPC replies are not saved or printed by this app. The database, SQLite sidecar files, and environment files are ignored by Git; mini-cloud also ignores `data/` when watching for changes. History is retained until you delete it. Stop the app and collector before deleting the database and its sidecar files.
 

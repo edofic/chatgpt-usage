@@ -1,9 +1,59 @@
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 import app
+
+
+class ReadLimitsTest(unittest.TestCase):
+    def run_server(self, body):
+        # Use a real pipe to exercise message framing and initialization order.
+        popen = subprocess.Popen
+        script = "import json, select, sys, time\n" + body
+
+        def start(*args, **kwargs):
+            return popen([sys.executable, "-u", "-c", script], **kwargs)
+
+        with patch.object(app.subprocess, "Popen", side_effect=start):
+            return app.read_limits()
+
+    def test_initialization_finishes_before_read_and_batched_reply_is_drained(self):
+        result = self.run_server('''
+request = json.loads(sys.stdin.buffer.readline())
+assert request['method'] == 'initialize'
+assert not select.select([sys.stdin.buffer], [], [], 0.05)[0]
+print(json.dumps({'id': request['id'], 'result': {}}), flush=True)
+assert json.loads(sys.stdin.buffer.readline())['method'] == 'initialized'
+request = json.loads(sys.stdin.buffer.readline())
+assert request['method'] == 'account/rateLimits/read'
+sys.stdout.write(json.dumps({'method': 'account/updated', 'params': {}}) + '\\n'
+                 + json.dumps({'id': request['id'], 'result': {'accountId': 'test'}}) + '\\n')
+sys.stdout.flush()
+time.sleep(5)
+''')
+        self.assertEqual(result, {"accountId": "test"})
+
+    def test_initialization_error_is_reported_separately(self):
+        with self.assertRaisesRegex(app.CollectionError, "^initialization_failed$"):
+            self.run_server('''
+request = json.loads(sys.stdin.buffer.readline())
+print(json.dumps({'id': request['id'], 'error': {'message': 'private details'}}), flush=True)
+time.sleep(5)
+''')
+
+    def test_upstream_error_does_not_expose_raw_details(self):
+        with self.assertRaisesRegex(app.CollectionError, "^rate_limits_unavailable$"):
+            self.run_server('''
+request = json.loads(sys.stdin.buffer.readline())
+print(json.dumps({'id': request['id'], 'result': {}}), flush=True)
+sys.stdin.buffer.readline()
+request = json.loads(sys.stdin.buffer.readline())
+print(json.dumps({'id': request['id'], 'error': {'message': 'private details'}}), flush=True)
+time.sleep(5)
+''')
 
 
 class UsageCyclesTest(unittest.TestCase):
@@ -96,6 +146,44 @@ class UsageCyclesTest(unittest.TestCase):
         self.sample(self.start + 1200, self.start + 18000, 0, duration=300)
         self.assertEqual([len(c["samples"]) for c in self.cycles()], [1, 1])
         self.assertEqual(app.series(self.connection, "account", "codex:primary", 123), [])
+
+    def test_plan_change_moves_weekly_window_and_exposes_five_hour_window(self):
+        self.sample(self.start, self.start + self.week, 1)
+        result = {"accountId": "account", "rateLimitsByLimitId": {"codex": {
+            "planType": "plus",
+            "primary": {"windowDurationMins": 300, "usedPercent": 2,
+                        "resetsAt": self.start + 18000},
+            "secondary": {"windowDurationMins": 10080, "usedPercent": 11,
+                          "resetsAt": self.start + self.week},
+        }}}
+        with patch.object(app, "read_limits", return_value=result), \
+                patch.object(app.time, "time", return_value=self.start + 600):
+            self.assertEqual(app.collect(), 0)
+        dashboard = app.dashboard()
+        self.assertEqual(dashboard["last_run"]["sample_count"], 2)
+        five, week = dashboard["windows"]
+        self.assertEqual((five["window_kind"], five["source_key"], five["used_percent"]),
+                         ("5h", "codex:primary", 2))
+        self.assertEqual((week["window_kind"], week["source_key"], week["used_percent"]),
+                         ("week", "codex:secondary", 11))
+        self.assertEqual(len(five["samples"]), 1)
+        self.assertEqual(five["samples"][0]["used_percent"], 2)
+
+    def test_failed_collection_preserves_samples_and_next_success_recovers(self):
+        self.sample(self.start, self.start + self.week, 1)
+        with patch.object(app, "read_limits", side_effect=app.CollectionError("rate_limits_unavailable")):
+            self.assertEqual(app.collect(), 1)
+        failed = app.dashboard()
+        self.assertFalse(failed["last_run"]["ok"])
+        self.assertEqual(failed["windows"][0]["used_percent"], 1)
+        result = {"accountId": "account", "rateLimits": {"limitId": "codex",
+            "primary": {"windowDurationMins": 10080, "usedPercent": 2,
+                        "resetsAt": self.start + self.week}}}
+        with patch.object(app, "read_limits", return_value=result):
+            self.assertEqual(app.collect(), 0)
+        recovered = app.dashboard()
+        self.assertTrue(recovered["last_run"]["ok"])
+        self.assertEqual(recovered["windows"][0]["used_percent"], 2)
 
 
 if __name__ == "__main__":

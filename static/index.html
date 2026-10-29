@@ -584,7 +584,7 @@
   <main class="wrap">
     <div id="panels" class="panels"></div>
     <div id="status" class="statusbar">Loading usage data…</div>
-    <details class="explain"><summary>About this chart</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through the reported week. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
+    <details class="explain"><summary>About these charts</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through each reported window. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
     <section id="rightsizing" class="panel rightsizing" aria-label="Compare subscription plans" tabindex="-1" hidden></section>
   </main>
   <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
@@ -607,7 +607,7 @@
 
     const panels = document.getElementById('panels');
     const status = document.getElementById('status');
-    let selectedReset = null;
+    const selectedResets = new Map();
     let lastData = null;
     const dateTime = seconds => new Date(seconds * 1000).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
     const percent = number => `${Math.round(number)}%`;
@@ -659,15 +659,17 @@
     function emptyPanel() {
       const article = document.createElement('article');
       article.className = 'panel empty';
-      article.innerHTML = '<h1>Waiting for weekly usage</h1><p>The next successful check will show your allowance here.</p>';
+      article.innerHTML = '<h1>Waiting for usage</h1><p>The next successful check will show your allowance here.</p>';
       return article;
     }
 
     function panel(window) {
       const remaining = 100 - window.used_percent, currentPace = pace(window);
+      const fiveHour = window.window_kind === '5h';
+      const selectionKey = `${window.source_key}:${window.window_kind}`;
       const article = document.createElement('article');
       article.className = 'panel';
-      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Codex · weekly</div><h1>Weekly allowance</h1></div><span class="badge"></span></div>
+      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Codex · ${fiveHour ? '5-hour' : 'weekly'}</div><h1>${fiveHour ? '5-hour allowance' : 'Weekly allowance'}</h1></div><span class="badge"></span></div>
         <div class="meter"><strong></strong><span>remaining</span></div><div class="bar"><i></i></div>
         <div class="chart-head"><b>Burndown</b><select aria-label="Choose usage window"></select></div><div class="chart"></div>
         <div class="legend"><span><i class="swatch"></i> Actual</span><span><i class="swatch guide"></i> Even pace</span></div>
@@ -682,6 +684,7 @@
       article.querySelector('.time-left').textContent = duration(window.resets_at - Date.now()/1000);
       article.querySelector('.pace-detail').textContent = currentPace.detail;
       const select = article.querySelector('select');
+      select.setAttribute('aria-label', fiveHour ? 'Choose 5-hour usage window' : 'Choose weekly usage window');
       for (const cycle of window.cycles) {
         const option = document.createElement('option');
         option.value = String(cycle);
@@ -699,12 +702,13 @@
           chartElement.innerHTML = chart(window, reset, data.samples);
         } catch { chartElement.textContent = 'Could not load this window.'; }
       };
-      select.addEventListener('change', () => { selectedReset = Number(select.value); showCycle(); });
+      select.addEventListener('change', () => { selectedResets.set(selectionKey, Number(select.value)); showCycle(); });
+      const selectedReset = selectedResets.get(selectionKey);
       if (selectedReset && window.cycles.includes(selectedReset)) {
         select.value = String(selectedReset);
         showCycle();
       } else {
-        selectedReset = null;
+        selectedResets.delete(selectionKey);
       }
       return article;
     }
@@ -713,10 +717,17 @@
       lastData = data;
       panels.replaceChildren();
       const weekly = data.windows.find(w => w.limit_id === 'codex' && w.window_kind === 'week') || data.windows.find(w => w.window_kind === 'week');
-      panels.append(weekly ? panel(weekly) : emptyPanel());
+      const fiveHour = data.windows.find(w => w.limit_id === (weekly?.limit_id || 'codex') && w.window_kind === '5h');
+      for (const window of [weekly, fiveHour]) if (window) panels.append(panel(window));
+      if (!panels.children.length) panels.append(emptyPanel());
       const last = data.last_run;
       if (!last) status.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
-      else if (!last.ok) { status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.`; status.classList.add('error'); }
+      else if (!last.ok) {
+        const hint = last.status === 'rate_limits_unavailable'
+          ? ' Try Refresh. If this persists after changing plans, sign in again with codex login on the server.' : '';
+        status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.${hint}`;
+        status.classList.add('error');
+      }
       else { status.classList.remove('error'); status.textContent = `Checked ${dateTime(last.checked_at)} · auto-refreshes while visible`; }
       window.dispatchEvent(new Event('usage:updated'));
     }
