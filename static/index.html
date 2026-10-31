@@ -637,7 +637,9 @@
       const width = matchMedia('(max-width: 600px)').matches ? 360 : 760;
       const height = 225, left = 34, right = 13, top = 12, bottom = 33;
       const windowStart = reset - window.duration_mins * 60;
-      const start = samples.reduce((earliest, p) => Math.min(earliest, p.sampled_at), windowStart);
+      const start = window.window_kind === '5h'
+        ? windowStart
+        : samples.reduce((earliest, p) => Math.min(earliest, p.sampled_at), windowStart);
       const span = reset - start;
       const x = time => left + Math.max(0, Math.min(1, (time - start) / span)) * (width - left - right);
       const y = remaining => top + (100 - remaining) / 100 * (height - top - bottom);

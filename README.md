@@ -91,7 +91,7 @@ If a refresh fails with `rate_limits_unavailable`, previous samples remain visib
 
 Only account identifiers, bucket metadata, percentages, and timestamps are stored. Credentials and raw RPC replies are not saved or printed by this app. The database, SQLite sidecar files, and environment files are ignored by Git; mini-cloud also ignores `data/` when watching for changes. History is retained until you delete it. Stop the app and collector before deleting the database and its sidecar files.
 
-The window selector groups small reset-time variations and moving reset estimates while an allowance is unused into one observed window. Raw timestamps remain stored, and the chart includes idle samples before activity anchors the window's start.
+The window selector groups small reset-time variations and moving reset estimates while an allowance is unused into one observed window. Raw timestamps remain stored. Five-hour charts show only the five hours ending at reset; weekly charts also include idle samples before activity anchors the window's start.
 
 The even-pace line runs from 100% remaining at the inferred window start to 0% at reset, staying at 100% during any preceding idle period. It is a planning reference and does not account for changing allowance, rolling windows, or resets between samples. Bursts between samples may be missed. Failed collection records a status code and leaves previous samples visible; a manual collector run exits nonzero on failure.
 
