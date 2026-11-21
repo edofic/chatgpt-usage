@@ -877,8 +877,7 @@
         : { tone: 'warn', label: 'Burning fast', deltaText, detail, ideal, difference, active: true };
     }
 
-    function providerColor(provider, tone) {
-      if (tone === 'warn') return 'var(--warning)';
+    function providerColor(provider) {
       return provider === 'antigravity' ? 'var(--accent-2)' : 'var(--accent)';
     }
 
@@ -981,7 +980,7 @@
         ? 'Unused'
         : `<b>${escapeHtml(duration(win.resets_at - Date.now() / 1000))}</b> · ${escapeHtml(win.window_kind === '5h' ? shortTime(win.resets_at) : shortDate(win.resets_at))}`;
       const deltaClass = p.tone === 'warn' ? 'warn' : (p.tone === 'neutral' ? 'neutral' : (isAg ? 'ag' : ''));
-      const fillClass = p.tone === 'warn' ? 'warn' : (win.idle ? 'idle' : (isAg ? 'ag' : ''));
+      const fillClass = win.idle ? 'idle' : (isAg ? 'ag' : '');
       const notchHtml = p.active && p.ideal !== null
         ? `<span class="pace-notch" style="left:${p.ideal.toFixed(2)}%"></span>`
         : '';
@@ -1195,7 +1194,7 @@
           }
           const rem = Math.max(0, Math.min(100, 100 - win.used_percent));
           const p = paceInfo(win);
-          const barClass = win.idle ? 'idle' : (p.tone === 'warn' ? 'warn' : '');
+          const barClass = win.idle ? 'idle' : '';
           const notch = p.active && p.ideal !== null
             ? `<span class="mini-notch" style="left:${p.ideal.toFixed(2)}%"></span>`
             : '';
