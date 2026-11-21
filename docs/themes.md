@@ -2,7 +2,7 @@
 
 The dashboard includes all 22 stock themes in the latest released Omarchy version,
 [v4.0.4](https://github.com/omacom/omarchy/releases/tag/v4.0.4), checked on October 11, 2026,
-plus the existing ChatGPT-inspired light theme. Gruvbox remains the default.
+plus the ChatGPT-inspired light theme and a T3-inspired dark theme. Gruvbox remains the default.
 
 The list and palettes come from the release's
 [`themes/` directory](https://github.com/omacom/omarchy/tree/c668141e9c42b13c80c9ca4ea108e11708c5e8a5/themes),

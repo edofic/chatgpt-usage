@@ -69,12 +69,14 @@ def settings(value):
 
 def evidence(connection, cycles_for):
     """Choose one latest weekly bucket, avoiding duplicate primary/secondary data."""
-    account = connection.execute("SELECT account_id FROM samples ORDER BY sampled_at DESC, id DESC LIMIT 1").fetchone()
+    account = connection.execute(
+        "SELECT account_id FROM samples WHERE provider = 'codex' ORDER BY sampled_at DESC, id DESC LIMIT 1"
+    ).fetchone()
     if not account:
         return None
     account = account["account_id"]
     source = connection.execute("""SELECT source_key FROM samples
-        WHERE account_id = ? AND duration_mins = 10080
+        WHERE provider = 'codex' AND account_id = ? AND duration_mins = 10080
         ORDER BY sampled_at DESC, CASE limit_id WHEN 'codex' THEN 0 ELSE 1 END, id DESC LIMIT 1""",
         (account,)).fetchone()
     if not source:

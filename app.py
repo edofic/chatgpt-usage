@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Collect Codex plan limits and serve a small read-only dashboard."""
 
+import antigravity
 import fcntl
 import json
 import math
@@ -19,8 +20,10 @@ from urllib.parse import parse_qs, urlparse
 ROOT = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", ROOT / "data" / "usage.sqlite"))
 CODEX_BIN = os.environ.get("CODEX_BIN", "codex")
+ANTIGRAVITY_TOKEN_PATH = os.environ.get("ANTIGRAVITY_TOKEN_PATH", "").strip()
 KINDS = {300: "5h", 10080: "week"}
 RESET_TOLERANCE = 60  # Reported reset timestamps can vary by a few seconds.
+PROVIDERS = ("codex", "antigravity")
 
 
 class CollectionError(Exception):
@@ -41,10 +44,12 @@ def database():
             source_key TEXT NOT NULL,
             limit_id TEXT NOT NULL,
             limit_name TEXT,
+            limit_description TEXT,
             window_kind TEXT NOT NULL,
             duration_mins INTEGER NOT NULL,
             resets_at INTEGER NOT NULL,
             used_percent REAL NOT NULL,
+            provider TEXT NOT NULL DEFAULT 'codex',
             UNIQUE (sampled_at, account_id, source_key)
         );
         CREATE INDEX IF NOT EXISTS samples_account_source_cycle
@@ -54,8 +59,23 @@ def database():
             checked_at INTEGER NOT NULL,
             ok INTEGER NOT NULL,
             status TEXT NOT NULL,
-            sample_count INTEGER NOT NULL DEFAULT 0
+            sample_count INTEGER NOT NULL DEFAULT 0,
+            provider TEXT NOT NULL DEFAULT 'codex'
         );
+    """)
+    sample_columns = {row["name"] for row in connection.execute("PRAGMA table_info(samples)")}
+    if "provider" not in sample_columns:
+        connection.execute("ALTER TABLE samples ADD COLUMN provider TEXT NOT NULL DEFAULT 'codex'")
+    if "limit_description" not in sample_columns:
+        connection.execute("ALTER TABLE samples ADD COLUMN limit_description TEXT")
+    run_columns = {row["name"] for row in connection.execute("PRAGMA table_info(collection_runs)")}
+    if "provider" not in run_columns:
+        connection.execute("ALTER TABLE collection_runs ADD COLUMN provider TEXT NOT NULL DEFAULT 'codex'")
+    connection.executescript("""
+        CREATE INDEX IF NOT EXISTS samples_provider_account_source_cycle
+          ON samples (provider, account_id, source_key, resets_at, sampled_at);
+        CREATE INDEX IF NOT EXISTS collection_runs_provider_id
+          ON collection_runs (provider, id);
     """)
     return connection
 
@@ -134,6 +154,12 @@ def read_limits():
         process.stdout.close()
 
 
+def read_antigravity_limits():
+    if not ANTIGRAVITY_TOKEN_PATH:
+        raise CollectionError("antigravity_unconfigured")
+    return antigravity.read_limits(ANTIGRAVITY_TOKEN_PATH)
+
+
 def parsed_samples(result, sampled_at):
     account_id = result.get("accountId")
     if not isinstance(account_id, str) or not account_id:
@@ -166,7 +192,8 @@ def parsed_samples(result, sampled_at):
                     or not isinstance(reset, int) or reset <= 0):
                 continue
             rows.append((sampled_at, account_id, f"{limit_id}:{slot}", limit_id,
-                         limit_name, KINDS.get(duration, "other"), duration, reset, float(used)))
+                         limit_name, None, KINDS.get(duration, "other"), duration,
+                         reset, float(used), "codex"))
     if not rows:
         raise CollectionError("no_windows")
     return rows
@@ -180,33 +207,49 @@ def collect(min_age=0):
         return collect_locked(min_age)
 
 
+def _collect_provider(connection, provider, now, min_age, fetcher):
+    if min_age:
+        latest = connection.execute("""SELECT checked_at FROM collection_runs
+            WHERE provider = ? ORDER BY id DESC LIMIT 1""", (provider,)).fetchone()
+        if latest and now - latest["checked_at"] < min_age:
+            return 0
+    try:
+        rows = fetcher(now)
+    except (CollectionError, antigravity.AntigravityError) as exc:
+        connection.execute("""INSERT INTO collection_runs
+            (checked_at, ok, status, provider) VALUES (?, 0, ?, ?)""",
+                           (now, str(exc), provider))
+        connection.commit()
+        print(f"{provider} usage collection failed: {exc}", file=sys.stderr)
+        return 1
+    with connection:
+        connection.executemany("""INSERT OR REPLACE INTO samples
+            (sampled_at, account_id, source_key, limit_id, limit_name,
+             limit_description, window_kind, duration_mins, resets_at,
+             used_percent, provider)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
+        connection.execute("""INSERT INTO collection_runs
+            (checked_at, ok, status, sample_count, provider) VALUES (?, 1, 'ok', ?, ?)""",
+                           (now, len(rows), provider))
+    print(f"stored {len(rows)} {provider} usage window(s)")
+    return 0
+
+
 def collect_locked(min_age):
     now = int(time.time())
     connection = database()
     try:
-        if min_age:
-            latest = connection.execute("""SELECT checked_at FROM collection_runs
-                ORDER BY id DESC LIMIT 1""").fetchone()
-            if latest and now - latest["checked_at"] < min_age:
-                return 0
-        try:
-            rows = parsed_samples(read_limits(), now)
-        except CollectionError as exc:
-            connection.execute("INSERT INTO collection_runs (checked_at, ok, status) VALUES (?, 0, ?)",
-                               (now, str(exc)))
-            connection.commit()
-            print(f"usage collection failed: {exc}", file=sys.stderr)
-            return 1
-        with connection:
-            connection.executemany("""INSERT OR REPLACE INTO samples
-                (sampled_at, account_id, source_key, limit_id, limit_name,
-                 window_kind, duration_mins, resets_at, used_percent)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""", rows)
-            connection.execute("""INSERT INTO collection_runs
-                (checked_at, ok, status, sample_count) VALUES (?, 1, 'ok', ?)""",
-                               (now, len(rows)))
-        print(f"stored {len(rows)} usage window(s)")
-        return 0
+        exit_code = _collect_provider(
+            connection, "codex", now, min_age,
+            lambda at: parsed_samples(read_limits(), at),
+        )
+        if ANTIGRAVITY_TOKEN_PATH:
+            ag_exit = _collect_provider(
+                connection, "antigravity", now, min_age,
+                lambda at: antigravity.parsed_samples(read_antigravity_limits(), at),
+            )
+            exit_code = max(exit_code, ag_exit)
+        return exit_code
     finally:
         connection.close()
 
@@ -223,13 +266,29 @@ def usage_cycles(connection, account_id, source_key):
         FROM samples WHERE account_id = ? AND source_key = ?
         ORDER BY sampled_at, id""", (account_id, source_key))
     for row in rows:
+        if row["resets_at"] == 0:
+            same_cycle = (bool(cycles)
+                          and cycles[-1]["duration_mins"] == row["duration_mins"]
+                          and cycles[-1]["resets_at"] == 0)
+            if not same_cycle:
+                cycles.append({"resets_at": 0,
+                               "duration_mins": row["duration_mins"],
+                               "reset_estimates": {0},
+                               "idle": True,
+                               "samples": []})
+                awaiting_activity = True
+            cycle = cycles[-1]
+            cycle["samples"].append({"sampled_at": row["sampled_at"],
+                                     "used_percent": row["used_percent"]})
+            continue
         start = row["resets_at"] - row["duration_mins"] * 60
         # An unused allowance can report a full window from the check time until
         # activity anchors its reset. Those moving estimates are one idle cycle.
         floating = (row["used_percent"] == 0
                     and abs(start - row["sampled_at"]) <= RESET_TOLERANCE)
         same_cycle = False
-        if cycles and cycles[-1]["duration_mins"] == row["duration_mins"]:
+        if (cycles and cycles[-1]["duration_mins"] == row["duration_mins"]
+                and cycles[-1]["resets_at"] > 0):
             cycle = cycles[-1]
             same_cycle = abs(row["resets_at"] - cycle["resets_at"]) <= RESET_TOLERANCE
             if not same_cycle and awaiting_activity:
@@ -239,12 +298,15 @@ def usage_cycles(connection, account_id, source_key):
         if not same_cycle:
             cycles.append({"resets_at": row["resets_at"],
                            "duration_mins": row["duration_mins"],
-                           "reset_estimates": set(), "samples": []})
+                           "reset_estimates": set(),
+                           "idle": floating,
+                           "samples": []})
             awaiting_activity = floating
         else:
             awaiting_activity = awaiting_activity and floating
         cycle = cycles[-1]
         cycle["resets_at"] = row["resets_at"]
+        cycle["idle"] = awaiting_activity
         cycle["reset_estimates"].add(row["resets_at"])
         cycle["samples"].append({"sampled_at": row["sampled_at"],
                                  "used_percent": row["used_percent"]})
@@ -261,20 +323,32 @@ def series(connection, account_id, source_key, reset):
 def dashboard():
     connection = database()
     try:
-        run = row_dict(connection.execute("""SELECT checked_at, ok, status, sample_count
-            FROM collection_runs ORDER BY id DESC LIMIT 1""").fetchone())
-        account = connection.execute("""SELECT account_id FROM samples
-            ORDER BY sampled_at DESC, id DESC LIMIT 1""").fetchone()
+        provider_runs = {}
+        for provider in PROVIDERS:
+            provider_runs[provider] = row_dict(connection.execute("""SELECT checked_at, ok, status, sample_count
+                FROM collection_runs WHERE provider = ? ORDER BY id DESC LIMIT 1""", (provider,)).fetchone())
+        run = provider_runs["codex"] or provider_runs["antigravity"]
         windows = []
-        if account:
+        for provider in PROVIDERS:
+            account = connection.execute("""SELECT account_id FROM samples
+                WHERE provider = ? ORDER BY sampled_at DESC, id DESC LIMIT 1""", (provider,)).fetchone()
+            if not account:
+                continue
             rows = connection.execute("""SELECT s.* FROM samples s JOIN (
                 SELECT source_key, MAX(id) AS latest_id FROM samples
-                WHERE account_id = ? GROUP BY source_key
+                WHERE provider = ? AND account_id = ? GROUP BY source_key
             ) latest ON latest.latest_id = s.id
             WHERE s.window_kind IN ('5h', 'week')
-            ORDER BY CASE s.limit_id WHEN 'codex' THEN 0 ELSE 1 END,
-                     s.limit_id, CASE s.window_kind WHEN '5h' THEN 0 ELSE 1 END""",
-                (account["account_id"],)).fetchall()
+            ORDER BY CASE s.limit_id
+                         WHEN 'codex' THEN 0
+                         WHEN 'gemini' THEN 0
+                         WHEN '3p' THEN 1
+                         WHEN 'gemini-argon' THEN 2
+                         ELSE 3
+                     END,
+                     s.limit_id,
+                     CASE s.window_kind WHEN '5h' THEN 0 ELSE 1 END""",
+                (provider, account["account_id"])).fetchall()
             for row in rows:
                 item = dict(row)
                 item.pop("account_id")
@@ -282,19 +356,37 @@ def dashboard():
                 cycles = usage_cycles(connection, account["account_id"], row["source_key"])
                 cycles = [cycle for cycle in cycles
                           if cycle["duration_mins"] == row["duration_mins"]]
-                item["cycles"] = [cycle["resets_at"] for cycle in reversed(cycles[-16:])]
-                item["samples"] = cycles[-1]["samples"]
+                anchored = [cycle for cycle in cycles if cycle["resets_at"] > 0]
+                current = cycles[-1]
+                item["idle"] = bool(current["idle"])
+                item["cycles"] = [cycle["resets_at"] for cycle in reversed(anchored[-16:])]
+                item["samples"] = [] if current["resets_at"] == 0 else current["samples"]
                 windows.append(item)
-        return {"last_run": run, "server_time": int(time.time()), "windows": windows}
+        return {
+            "last_run": run,
+            "providers": {
+                "codex": {"configured": True, "last_run": provider_runs["codex"]},
+                "antigravity": {"configured": bool(ANTIGRAVITY_TOKEN_PATH),
+                                "last_run": provider_runs["antigravity"]},
+            },
+            "server_time": int(time.time()),
+            "windows": windows,
+        }
     finally:
         connection.close()
 
 
-def history(source_key, reset):
+def history(source_key, reset, provider=None):
     connection = database()
     try:
-        account = connection.execute("""SELECT account_id FROM samples
-            ORDER BY sampled_at DESC, id DESC LIMIT 1""").fetchone()
+        if provider in PROVIDERS:
+            account = connection.execute("""SELECT account_id FROM samples
+                WHERE provider = ? AND source_key = ?
+                ORDER BY sampled_at DESC, id DESC LIMIT 1""", (provider, source_key)).fetchone()
+        else:
+            account = connection.execute("""SELECT account_id FROM samples
+                WHERE source_key = ?
+                ORDER BY sampled_at DESC, id DESC LIMIT 1""", (source_key,)).fetchone()
         if not account:
             return []
         return series(connection, account["account_id"], source_key, reset)
@@ -334,10 +426,12 @@ class Handler(BaseHTTPRequestHandler):
             query = parse_qs(path.query)
             source = query.get("source", [""])[0]
             reset = query.get("reset", [""])[0]
-            if len(source) > 200 or not source or not reset.isdecimal():
+            provider = query.get("provider", [""])[0] or None
+            if (len(source) > 200 or not source or not reset.isdecimal()
+                    or (provider is not None and provider not in PROVIDERS)):
                 self.send_json({"error": "invalid request"}, 400)
             else:
-                self.send_json({"samples": history(source, int(reset))})
+                self.send_json({"samples": history(source, int(reset), provider=provider)})
         elif path.path in ("/", "/index.html", "/icon.svg", "/rightsizing.js", "/rightsizing.css"):
             filename = "index.html" if path.path == "/" else path.path[1:]
             payload = (ROOT / "static" / filename).read_bytes()

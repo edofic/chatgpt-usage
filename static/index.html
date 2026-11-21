@@ -30,6 +30,7 @@
       'vantablack': 'Vantablack',
       'white': 'White',
       'chatgpt': 'ChatGPT',
+      't3': 'T3',
     };
     try {
       const savedTheme = localStorage.getItem('chatgpt-usage-theme');
@@ -39,7 +40,7 @@
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/rightsizing.css">
   <script defer src="/rightsizing.js"></script>
-  <title>ChatGPT Usage</title>
+  <title>AI Usage</title>
   <style>
     :root {
       color-scheme: dark;
@@ -56,8 +57,12 @@
       --accent-ink: var(--accent);
       --accent-text: #152b29;
       --accent-soft: #354640;
+      --accent-2: #89b4fa;
+      --accent-2-ink: var(--accent-2);
+      --accent-2-soft: color-mix(in srgb, var(--accent-2) 14%, var(--card));
       --warning: #d8a657;
       --danger: #ea6962;
+      --ok: #8ec07c;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
@@ -75,8 +80,11 @@
       --accent: #205ea6;
       --accent-text: #fff;
       --accent-soft: #dce8f2;
+      --accent-2: #5e409d;
+      --accent-2-ink: #5e409d;
       --warning: #ad8300;
       --danger: #b93c32;
+      --ok: #24837b;
       --shadow: 0 14px 34px rgba(31,36,39,.12);
     }
     :root[data-theme="retro-82"] {
@@ -93,8 +101,10 @@
       --accent: #faa968;
       --accent-text: #05182e;
       --accent-soft: #4a3839;
+      --accent-2: #58c7d4;
       --warning: #e97b3c;
       --danger: #ff805c;
+      --ok: #7bd88f;
       --shadow: 0 14px 34px rgba(0,0,0,.3);
     }
     /* Additional stock palettes, adapted for dashboard surfaces and readable text. */
@@ -113,8 +123,11 @@
       --accent-ink: color-mix(in srgb, #1e66f5, #000000 20%);
       --accent-text: #eff1f5;
       --accent-soft: color-mix(in srgb, #1e66f5 12%, #e3e4e8);
+      --accent-2: #8839ef;
+      --accent-2-ink: color-mix(in srgb, #8839ef, #000000 18%);
       --warning: color-mix(in srgb, #df8e1d, #000000 40%);
       --danger: color-mix(in srgb, #d20f39, #000000 5%);
+      --ok: #40a02b;
       --shadow: 0 14px 34px rgba(0,0,0,.12);
     }
     :root[data-theme="catppuccin"] {
@@ -132,8 +145,10 @@
       --accent-ink: #89b4fa;
       --accent-text: #1e1e2e;
       --accent-soft: color-mix(in srgb, #89b4fa 12%, #313244);
+      --accent-2: #cba6f7;
       --warning: #f9e2af;
       --danger: #f38ba8;
+      --ok: #a6e3a1;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="ethereal"] {
@@ -151,8 +166,10 @@
       --accent-ink: color-mix(in srgb, #7d82d9, #ffffff 10%);
       --accent-text: #060b1e;
       --accent-soft: color-mix(in srgb, #7d82d9 12%, #131a3a);
+      --accent-2: #6ecfd9;
       --warning: #e9bb4f;
       --danger: #ed5b5a;
+      --ok: #78d6a3;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="everforest"] {
@@ -170,8 +187,10 @@
       --accent-ink: color-mix(in srgb, #7fbbb3, #ffffff 20%);
       --accent-text: #2d353b;
       --accent-soft: color-mix(in srgb, #7fbbb3 12%, #343f44);
+      --accent-2: #d699b6;
       --warning: #dbbc7f;
       --danger: color-mix(in srgb, #e67e80, #ffffff 15%);
+      --ok: #a7c080;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="hackerman"] {
@@ -189,8 +208,10 @@
       --accent-ink: #82fb9c;
       --accent-text: #0b0c16;
       --accent-soft: color-mix(in srgb, #82fb9c 12%, #151828);
+      --accent-2: #62b6ff;
       --warning: #50f7d4;
       --danger: #50f872;
+      --ok: #82fb9c;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="kanagawa"] {
@@ -208,8 +229,10 @@
       --accent-ink: #dcd7ba;
       --accent-text: #1f1f28;
       --accent-soft: color-mix(in srgb, #dcd7ba 12%, #223249);
+      --accent-2: #7e9cd8;
       --warning: #c0a36e;
       --danger: color-mix(in srgb, #c34043, #ffffff 35%);
+      --ok: #98bb6c;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="last-horizon"] {
@@ -227,8 +250,10 @@
       --accent-ink: #b59790;
       --accent-text: #0c0b0c;
       --accent-soft: color-mix(in srgb, #b59790 12%, #0c0b0c);
+      --accent-2: #8ea8c3;
       --warning: color-mix(in srgb, #6b5e73, #ffffff 15%);
       --danger: #c38b7b;
+      --ok: #98b4a0;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="lumon"] {
@@ -246,8 +271,10 @@
       --accent-ink: #8bc9eb;
       --accent-text: #16242d;
       --accent-soft: color-mix(in srgb, #8bc9eb 12%, #1b2d40);
+      --accent-2: #76d4b8;
       --warning: #6fa4c9;
       --danger: color-mix(in srgb, #4d86b0, #ffffff 15%);
+      --ok: #76d4b8;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="lupine"] {
@@ -265,8 +292,11 @@
       --accent-ink: color-mix(in srgb, #3264eb, #000000 15%);
       --accent-text: #fafafa;
       --accent-soft: color-mix(in srgb, #3264eb 12%, #ececec);
+      --accent-2: #7c3aed;
+      --accent-2-ink: color-mix(in srgb, #7c3aed, #000000 15%);
       --warning: color-mix(in srgb, #026fde, #000000 10%);
       --danger: color-mix(in srgb, #c900c4, #000000 5%);
+      --ok: #15803d;
       --shadow: 0 14px 34px rgba(0,0,0,.12);
     }
     :root[data-theme="matte-black"] {
@@ -284,8 +314,10 @@
       --accent-ink: #e68e0d;
       --accent-text: #121212;
       --accent-soft: color-mix(in srgb, #e68e0d 12%, #1e1e1e);
+      --accent-2: #60a5fa;
       --warning: color-mix(in srgb, #b91c1c, #ffffff 35%);
       --danger: color-mix(in srgb, #d35f5f, #ffffff 5%);
+      --ok: #4ade80;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="miasma"] {
@@ -303,8 +335,10 @@
       --accent-ink: color-mix(in srgb, #78824b, #ffffff 30%);
       --accent-text: #222222;
       --accent-soft: color-mix(in srgb, #78824b 12%, #2c2c2c);
+      --accent-2: #8ba6b8;
       --warning: color-mix(in srgb, #b36d43, #ffffff 20%);
       --danger: color-mix(in srgb, #685742, #ffffff 35%);
+      --ok: #8fa368;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="nord"] {
@@ -322,8 +356,10 @@
       --accent-ink: color-mix(in srgb, #81a1c1, #ffffff 35%);
       --accent-text: #2e3440;
       --accent-soft: color-mix(in srgb, #81a1c1 12%, #3b4252);
+      --accent-2: #a3be8c;
       --warning: #ebcb8b;
       --danger: color-mix(in srgb, #bf616a, #ffffff 40%);
+      --ok: #a3be8c;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="osaka-jade"] {
@@ -341,8 +377,10 @@
       --accent-ink: color-mix(in srgb, #509475, #ffffff 30%);
       --accent-text: #111c18;
       --accent-soft: color-mix(in srgb, #509475 12%, #23372b);
+      --accent-2: #7aa2f7;
       --warning: color-mix(in srgb, #459451, #ffffff 20%);
       --danger: color-mix(in srgb, #ff5345, #ffffff 15%);
+      --ok: #78c996;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="ristretto"] {
@@ -360,8 +398,10 @@
       --accent-ink: color-mix(in srgb, #f38d70, #ffffff 10%);
       --accent-text: #2c2525;
       --accent-soft: color-mix(in srgb, #f38d70 12%, #3d2f2a);
+      --accent-2: #85d3f2;
       --warning: #f9cc6c;
       --danger: #fd6883;
+      --ok: #adda78;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="rose-pine"] {
@@ -379,8 +419,11 @@
       --accent-ink: color-mix(in srgb, #56949f, #000000 35%);
       --accent-text: #faf4ed;
       --accent-soft: color-mix(in srgb, #56949f 12%, #ede7e1);
+      --accent-2: #907aa9;
+      --accent-2-ink: color-mix(in srgb, #907aa9, #000000 22%);
       --warning: color-mix(in srgb, #ea9d34, #000000 40%);
       --danger: color-mix(in srgb, #b4637a, #000000 20%);
+      --ok: #286983;
       --shadow: 0 14px 34px rgba(0,0,0,.12);
     }
     :root[data-theme="solitude"] {
@@ -398,8 +441,10 @@
       --accent-ink: color-mix(in srgb, #798186, #ffffff 10%);
       --accent-text: #101315;
       --accent-soft: color-mix(in srgb, #798186 12%, #101315);
+      --accent-2: #b4c0c7;
       --warning: #d9dbdc;
       --danger: color-mix(in srgb, #565d60, #ffffff 25%);
+      --ok: #a8b7b0;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="tokyo-night"] {
@@ -417,8 +462,10 @@
       --accent-ink: #7aa2f7;
       --accent-text: #1a1b26;
       --accent-soft: color-mix(in srgb, #7aa2f7 12%, #24283b);
+      --accent-2: #bb9af7;
       --warning: #e0af68;
       --danger: #f7768e;
+      --ok: #9ece6a;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="vantablack"] {
@@ -431,13 +478,15 @@
       --strong: #ffffff;
       --muted: #ececec;
       --line: #7a7a7a;
-      --soft-line: #1a1a1a;
+      --soft-line: #262626;
       --accent: #8d8d8d;
       --accent-ink: color-mix(in srgb, #8d8d8d, #ffffff 5%);
       --accent-text: #000000;
       --accent-soft: color-mix(in srgb, #8d8d8d 12%, #1a1a1a);
+      --accent-2: #d4d4d4;
       --warning: #cecece;
       --danger: #a4a4a4;
+      --ok: #d4d4d4;
       --shadow: 0 14px 34px rgba(0,0,0,.25);
     }
     :root[data-theme="white"] {
@@ -445,18 +494,21 @@
       --page: #ffffff;
       --panel: #ffffff;
       --card: #f5f5f5;
-      --field: #f5f5f5;
+      --field: #e9e9e9;
       --text: #000000;
       --strong: #000000;
-      --muted: #000000;
+      --muted: #404040;
       --line: #808080;
       --soft-line: #c0c0c0;
       --accent: #6e6e6e;
       --accent-ink: color-mix(in srgb, #6e6e6e, #000000 10%);
       --accent-text: #ffffff;
       --accent-soft: color-mix(in srgb, #6e6e6e 12%, #f5f5f5);
+      --accent-2: #222222;
+      --accent-2-ink: #222222;
       --warning: #4a4a4a;
       --danger: #2a2a2a;
+      --ok: #222222;
       --shadow: 0 14px 34px rgba(0,0,0,.12);
     }
     :root[data-theme="chatgpt"] {
@@ -473,121 +525,293 @@
       --accent: #087f63;
       --accent-text: #fff;
       --accent-soft: #e6f4ef;
+      --accent-2: #2563eb;
+      --accent-2-ink: #1d4ed8;
+      --accent-2-soft: #eff6ff;
       --warning: #a65d00;
       --danger: #c0392b;
+      --ok: #087f63;
       --shadow: 0 2px 12px rgba(0,0,0,.04);
       --mono: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+    :root[data-theme="t3"] {
+      color-scheme: dark;
+      --page: #0a0a0a;
+      --panel: #111111;
+      --card: #111111;
+      --field: #1b1b1b;
+      --text: #d4d4d8;
+      --strong: #ffffff;
+      --muted: #909090;
+      --line: #282828;
+      --soft-line: #1e1e1e;
+      --accent: #4065fb;
+      --accent-ink: #6b8cff;
+      --accent-text: #ffffff;
+      --accent-soft: #181d31;
+      --accent-2: #5fd6c2;
+      --accent-2-ink: #5fd6c2;
+      --accent-2-soft: color-mix(in srgb, #5fd6c2 14%, #111111);
+      --warning: #f59e0b;
+      --danger: #f87171;
+      --ok: #5fd6c2;
+      --shadow: 0 14px 34px rgba(0,0,0,.45);
+    }
+
     * { box-sizing:border-box; }
     html { background:var(--page); }
     body { margin:0; background:var(--page); color:var(--text); font:15px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     a { color:inherit; }
-    button,select { font:inherit; }
-    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    button,select { font:inherit; color:inherit; }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     .wrap { max-width:860px; margin:auto; padding:0 24px; }
     .masthead { margin:0 18px; border-bottom:1px solid var(--line); }
-    .topbar,.panel-head,.footer { display:flex; justify-content:space-between; align-items:center; gap:16px; }
-    .topbar { min-height:78px; padding:12px 24px; }
-    .brand { display:flex; align-items:center; gap:11px; color:var(--strong); text-decoration:none; font:700 19px/1.1 var(--mono); letter-spacing:.11em; text-transform:uppercase; }
-    .brand img { display:block; width:31px; height:31px; border-radius:4px; }
-    .actions { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+    .topbar,.footer { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .topbar { min-height:74px; padding:12px 24px; }
+    .brand { display:flex; align-items:center; gap:11px; color:var(--strong); text-decoration:none; font:700 18px/1.1 var(--mono); letter-spacing:.11em; text-transform:uppercase; }
+    .brand img { display:block; width:30px; height:30px; border-radius:4px; }
+    .actions { display:flex; align-items:center; gap:10px; white-space:nowrap; }
     .compare-link { margin-left:auto; color:var(--accent-ink); font:600 11px/1.4 var(--mono); white-space:nowrap; text-decoration:none; }
     .compare-link:hover { text-decoration:underline; text-underline-offset:3px; }
-    .usage-link { border:1px solid var(--accent); border-radius:2px; color:var(--strong); font:600 11px/1.2 var(--mono); letter-spacing:.04em; text-transform:uppercase; padding:9px 10px; text-decoration:none; }
-    .usage-link:hover { background:var(--accent-soft); }
-    .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent-ink); cursor:pointer; font-size:20px; line-height:1; padding:0; }
+    .usage-link { border:1px solid var(--line); border-radius:2px; color:var(--strong); font:600 11px/1.2 var(--mono); letter-spacing:.04em; text-transform:uppercase; padding:8px 10px; text-decoration:none; }
+    .usage-link:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .refresh { width:34px; height:34px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--accent-ink); cursor:pointer; font-size:19px; line-height:1; padding:0; }
     .refresh:hover { border-color:var(--accent); background:var(--accent-soft); }
     .refresh:disabled { cursor:wait; opacity:.6; }
     .theme-picker { display:flex; align-items:center; gap:8px; margin:0; color:var(--muted); font:600 11px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; }
-    .theme-picker select { max-width:155px; padding:9px 24px 9px 10px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--strong); font:600 12px/1 var(--mono); cursor:pointer; }
-    main { padding-top:20px!important; padding-bottom:35px!important; }
-    .panels { display:grid; gap:16px; }
-    .panel { min-width:0; background:var(--card); border:1px solid var(--soft-line); border-radius:3px; padding:26px; }
-    .panel-head { align-items:flex-start; }
+    .theme-picker select { max-width:155px; padding:8px 24px 8px 10px; border:1px solid var(--line); border-radius:2px; background:var(--panel); color:var(--strong); font:600 12px/1 var(--mono); cursor:pointer; }
+
+    main { padding-top:18px!important; padding-bottom:32px!important; }
+    .panels { display:grid; gap:14px; }
+    .panel { min-width:0; background:var(--card); border:1px solid var(--soft-line); border-radius:4px; padding:18px 20px 16px; }
     .kicker { text-transform:uppercase; letter-spacing:.11em; color:var(--accent-ink); font:600 10px/1.3 var(--mono); }
-    h1 { margin:7px 0 0; color:var(--strong); font:700 21px/1.2 var(--mono); letter-spacing:.04em; }
-    .badge { border:1px solid var(--accent); border-radius:2px; padding:6px 8px; font:600 11px/1.2 var(--mono); white-space:nowrap; background:var(--accent-soft); color:var(--accent-ink); }
-    .badge.warn { color:var(--warning); background:var(--field); border-color:var(--warning); }
-    .badge.neutral { color:var(--muted); background:var(--panel); border-color:var(--line); }
-    .meter { display:flex; align-items:baseline; gap:11px; margin:23px 0 12px; }
-    .meter strong { color:var(--strong); font:700 clamp(50px,7vw,74px)/1 var(--mono); letter-spacing:-.075em; }
-    .meter span { color:var(--muted); font:12px/1.3 var(--mono); }
-    .bar { height:8px; background:var(--field); border-radius:2px; overflow:hidden; }
-    .bar i { display:block; height:100%; background:var(--accent); }
-    .bar i.warn { background:var(--warning); }
-    .chart-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:25px 0 8px; }
-    .chart-head b { color:var(--strong); font:700 12px/1.2 var(--mono); letter-spacing:.09em; text-transform:uppercase; }
-    select { max-width:175px; border:1px solid var(--line); background:var(--field); color:var(--strong); border-radius:2px; padding:6px 8px; font:11px/1.3 var(--mono); cursor:pointer; }
+
+    /* Window card header */
+    .card-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .card-title-group { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+    .panel h1 { margin:0; color:var(--strong); font:700 16px/1.2 var(--mono); letter-spacing:.05em; text-transform:uppercase; }
+    .card-sub { font:11px/1.2 var(--mono); color:var(--muted); }
+
+    /* Segmented toggle */
+    .seg { display:inline-flex; background:var(--panel); border:1px solid var(--soft-line); border-radius:3px; padding:2px; gap:2px; }
+    .seg button { border:0; background:transparent; color:var(--muted); font:600 10.5px/1 var(--mono); padding:5px 9px; border-radius:2px; cursor:pointer; }
+    .seg button:hover { color:var(--strong); }
+    .seg button.active { background:var(--card); color:var(--strong); box-shadow:0 1px 2px rgba(0,0,0,.18); }
+
+    /* Compact per-provider rows */
+    .prov-rows { display:flex; flex-direction:column; gap:6px; }
+    .prov-row {
+      width:100%;
+      border:1px solid color-mix(in srgb, var(--soft-line) 85%, transparent);
+      background:color-mix(in srgb, var(--panel) 78%, transparent);
+      border-radius:3px;
+      padding:9px 12px;
+      display:grid;
+      grid-template-columns:94px 48px 1fr minmax(168px, auto);
+      align-items:center;
+      gap:12px;
+      text-align:left;
+      transition:border-color .15s ease, background .15s ease;
+    }
+    .prov-row.clickable { cursor:pointer; }
+    .prov-row.clickable:hover { border-color:var(--line); background:var(--panel); }
+    .prov-row.selected-codex { border-color:var(--accent); background:var(--panel); }
+    .prov-row.selected-ag { border-color:var(--accent-2); background:var(--panel); }
+    .prov-label { display:inline-flex; align-items:center; gap:7px; font:700 11.5px/1 var(--mono); letter-spacing:.05em; text-transform:uppercase; color:var(--strong); white-space:nowrap; }
+    .pdot { width:7px; height:7px; border-radius:50%; display:inline-block; flex-shrink:0; background:var(--accent); }
+    .pdot.ag { background:var(--accent-2); }
+    .prov-pct { font:700 16px/1 var(--mono); font-variant-numeric:tabular-nums; color:var(--strong); text-align:right; }
+
+    /* Slim bar + vertical pace notch */
+    .bar-track { position:relative; height:7px; background:var(--field); border-radius:3.5px; }
+    .bar-fill { position:absolute; inset:0 auto 0 0; border-radius:3.5px; background:var(--accent); }
+    .bar-fill.ag { background:var(--accent-2); }
+    .bar-fill.warn { background:var(--warning); }
+    .bar-fill.idle { background:var(--muted); opacity:.45; }
+    .pace-notch {
+      position:absolute;
+      top:-3.5px;
+      bottom:-3.5px;
+      width:2.5px;
+      transform:translateX(-50%);
+      border-radius:1.5px;
+      background:var(--strong);
+      box-shadow:0 0 0 1.5px var(--panel);
+      pointer-events:none;
+    }
+
+    .prov-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; font:11px/1 var(--mono); color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .prov-right b { color:var(--strong); font-weight:600; }
+    .delta { font:600 10px/1 var(--mono); padding:2.5px 5.5px; border-radius:3px; background:var(--accent-soft); color:var(--accent-ink); }
+    .delta.ag { background:var(--accent-2-soft); color:var(--accent-2-ink); }
+    .delta.neutral { background:var(--card); color:var(--muted); border:1px solid color-mix(in srgb, var(--soft-line) 75%, transparent); }
+    .delta.warn { background:color-mix(in srgb, var(--warning) 16%, var(--card)); color:var(--warning); }
+
+    /* Burndown chart area */
+    .chart-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:13px 0 4px; flex-wrap:wrap; }
+    .chart-head b { color:var(--muted); font:700 10.5px/1.2 var(--mono); letter-spacing:.09em; text-transform:uppercase; }
+    select { max-width:205px; border:1px solid var(--line); background:var(--field); color:var(--strong); border-radius:2px; padding:4px 8px; font:11px/1.3 var(--mono); cursor:pointer; }
+    select[hidden] { display:none; }
     .plot { display:block; width:100%; height:auto; font-family:var(--mono); }
-    .legend { display:flex; align-items:center; gap:18px; color:var(--muted); font:11px/1.3 var(--mono); margin:0 0 18px; }
-    .legend span { display:flex; align-items:center; gap:6px; }
-    .swatch { width:18px; height:3px; background:var(--accent); display:inline-block; }
+    .card-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:6px; padding-top:9px; border-top:1px solid color-mix(in srgb, var(--soft-line) 70%, transparent); font:10.5px/1.3 var(--mono); color:var(--muted); flex-wrap:wrap; }
+    .legend { display:flex; align-items:center; gap:13px; flex-wrap:wrap; }
+    .legend span { display:inline-flex; align-items:center; gap:5px; }
+    .swatch { width:14px; height:2.5px; background:var(--accent); display:inline-block; }
+    .swatch.ag { background:var(--accent-2); }
     .swatch.guide { background:var(--muted); opacity:.6; }
-    .metrics { display:grid; grid-template-columns:1fr 1fr; gap:10px; border-top:1px solid var(--soft-line); padding-top:16px; }
-    .metric small { display:block; color:var(--muted); font:11px/1.3 var(--mono); }
-    .metric b { display:block; color:var(--strong); font:600 13px/1.4 var(--mono); margin-top:5px; }
-    .panel-foot { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font:11px/1.4 var(--mono); margin-top:15px; }
-    .statusbar { margin-top:13px; color:var(--muted); font:11px/1.5 var(--mono); }
-    .statusbar strong { color:var(--strong); }
+    .swatch-notch { width:2.5px; height:10px; border-radius:1px; background:var(--strong); display:inline-block; }
+
+    /* Tucked-away Antigravity specials */
+    .specials-wrap { display:flex; flex-direction:column; gap:6px; margin-top:2px; }
+    .specials-label { font:600 10px/1.2 var(--mono); letter-spacing:.11em; text-transform:uppercase; color:var(--muted); padding:0 2px; }
+    .special-tray { background:var(--card); border:1px solid var(--soft-line); border-radius:4px; overflow:hidden; }
+    .special-item + .special-item { border-top:1px solid color-mix(in srgb, var(--soft-line) 80%, transparent); }
+    .special-summary { width:100%; border:0; background:transparent; padding:11px 16px; display:flex; align-items:center; justify-content:space-between; gap:14px; cursor:pointer; text-align:left; }
+    .special-summary:hover { background:color-mix(in srgb, var(--panel) 55%, transparent); }
+    .special-info { min-width:0; flex:1; }
+    .special-name { font:700 12.5px/1.2 var(--mono); color:var(--strong); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .special-sub { margin-top:3px; font:11px/1.3 var(--mono); color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .badge { font:600 10px/1.2 var(--mono); padding:2.5px 6px; border-radius:2px; border:1px solid var(--soft-line); background:var(--panel); color:var(--muted); white-space:nowrap; }
+    .badge.ag { border-color:color-mix(in srgb, var(--accent-2) 55%, transparent); background:var(--accent-2-soft); color:var(--accent-2-ink); }
+    .badge.warn { border-color:var(--warning); background:var(--field); color:var(--warning); }
+    .special-right { display:flex; align-items:center; gap:14px; flex-shrink:0; }
+    .mini-meters { display:grid; grid-template-columns:82px 82px; gap:12px; align-items:center; }
+    .mini-pill { display:flex; flex-direction:column; gap:4px; }
+    .mini-pill.na { opacity:.36; }
+    .mini-pill-top { display:flex; justify-content:space-between; font:600 10px/1 var(--mono); color:var(--muted); font-variant-numeric:tabular-nums; }
+    .mini-pill-top b { color:var(--strong); }
+    .mini-bar { position:relative; height:4px; background:var(--field); border-radius:2px; }
+    .mini-bar i { position:absolute; inset:0 auto 0 0; background:var(--accent-2); border-radius:2px; }
+    .mini-bar.warn i { background:var(--warning); }
+    .mini-bar.idle i { background:var(--muted); opacity:.42; }
+    .mini-notch { position:absolute; top:-2.5px; bottom:-2.5px; width:2px; transform:translateX(-50%); border-radius:1px; background:var(--strong); box-shadow:0 0 0 1px var(--card); pointer-events:none; }
+    .chev { font:12px/1 var(--mono); color:var(--muted); transition:transform .15s ease; }
+    .special-item.open .chev { transform:rotate(180deg); }
+    .special-body { display:none; padding:0 16px 15px; border-top:1px solid color-mix(in srgb, var(--soft-line) 55%, transparent); background:color-mix(in srgb, var(--panel) 40%, transparent); }
+    .special-item.open .special-body { display:block; }
+    .idle-note { margin-top:11px; padding:10px 12px; border-radius:3px; border:1px dashed var(--line); font:11px/1.45 var(--mono); color:var(--muted); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+
+    /* Statusbar, empty, explain, footer */
+    .statusbar { margin-top:13px; color:var(--muted); font:11px/1.6 var(--mono); display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; }
+    .status-seg { display:inline-flex; align-items:center; gap:6px; }
+    .sdot { width:6.5px; height:6.5px; border-radius:50%; background:var(--ok); display:inline-block; flex-shrink:0; }
+    .sdot.err { background:var(--danger); }
+    .sdot.muted { background:var(--muted); }
     .error { color:var(--danger)!important; }
-    .empty { text-align:center; padding:55px 25px; color:var(--muted); }
+    .empty { text-align:center; padding:48px 24px; color:var(--muted); }
+    .empty h1 { text-transform:none; }
     .empty p { margin:8px 0 0; }
-    .explain { margin-top:19px; color:var(--muted); font-size:12px; }
+    .explain { margin-top:16px; color:var(--muted); font-size:12px; }
     .explain summary { cursor:pointer; width:max-content; color:var(--accent-ink); font:600 11px/1.4 var(--mono); }
-    .explain p { margin:7px 0 0; max-width:650px; }
-    .footer { border-top:1px solid var(--line); padding-top:18px!important; padding-bottom:25px!important; color:var(--muted); font:10px/1.5 var(--mono); }
-    :root[data-theme="chatgpt"] .panel { border-radius:16px; box-shadow:var(--shadow); }
+    .explain p { margin:7px 0 0; max-width:680px; }
+    .footer { border-top:1px solid var(--line); padding-top:16px!important; padding-bottom:24px!important; color:var(--muted); font:10px/1.5 var(--mono); }
+
+    /* ChatGPT light theme overrides */
+    :root[data-theme="chatgpt"] .panel,
+    :root[data-theme="chatgpt"] .special-tray { border-radius:14px; box-shadow:var(--shadow); }
     :root[data-theme="chatgpt"] .brand,
     :root[data-theme="chatgpt"] .usage-link,
     :root[data-theme="chatgpt"] .theme-picker,
+    :root[data-theme="chatgpt"] .panel h1,
     :root[data-theme="chatgpt"] .chart-head b,
-    :root[data-theme="chatgpt"] .kicker { text-transform:none; letter-spacing:0; }
-    :root[data-theme="chatgpt"] h1 { letter-spacing:-.02em; }
-    :root[data-theme="chatgpt"] .meter strong { letter-spacing:-.05em; }
-    :root[data-theme="chatgpt"] .usage-link { border-color:var(--line); }
+    :root[data-theme="chatgpt"] .kicker,
+    :root[data-theme="chatgpt"] .prov-label,
+    :root[data-theme="chatgpt"] .specials-label { text-transform:none; letter-spacing:0; }
+    :root[data-theme="chatgpt"] .prov-row,
+    :root[data-theme="chatgpt"] .seg,
     :root[data-theme="chatgpt"] select,
     :root[data-theme="chatgpt"] .refresh,
     :root[data-theme="chatgpt"] .usage-link { border-radius:8px; }
+    :root[data-theme="chatgpt"] .seg button { border-radius:6px; }
     :root[data-theme="chatgpt"] .badge,
-    :root[data-theme="chatgpt"] .bar { border-radius:999px; }
+    :root[data-theme="chatgpt"] .delta { border-radius:999px; }
+
+    /* T3 dark theme overrides */
+    :root[data-theme="t3"] .masthead { border-bottom-color:var(--soft-line); }
+    :root[data-theme="t3"] .footer { border-top-color:var(--soft-line); }
+    :root[data-theme="t3"] .panel,
+    :root[data-theme="t3"] .special-tray { border-radius:10px; }
+    :root[data-theme="t3"] .prov-row { border-radius:8px; background:#111111; border-color:#1e1e1e; }
+    :root[data-theme="t3"] .prov-row.clickable:hover { background:#151515; border-color:#2b2b2b; }
+    :root[data-theme="t3"] .prov-row.selected-codex { background:#141724; border-color:var(--accent); }
+    :root[data-theme="t3"] .prov-row.selected-ag { background:#111c1a; border-color:var(--accent-2); }
+    :root[data-theme="t3"] .seg { border-radius:8px; background:#111111; border-color:#222222; }
+    :root[data-theme="t3"] .seg button { border-radius:6px; }
+    :root[data-theme="t3"] .seg button.active { background:#1e1e1e; color:#ffffff; box-shadow:none; }
+    :root[data-theme="t3"] select,
+    :root[data-theme="t3"] .refresh,
+    :root[data-theme="t3"] .usage-link,
+    :root[data-theme="t3"] .idle-note { border-radius:8px; }
+    :root[data-theme="t3"] .usage-link,
+    :root[data-theme="t3"] .refresh,
+    :root[data-theme="t3"] .theme-picker select { background:#111111; border-color:#222222; }
+    :root[data-theme="t3"] .usage-link { color:var(--muted); text-transform:none; letter-spacing:0; }
+    :root[data-theme="t3"] .usage-link:hover { color:var(--strong); border-color:#333333; background:#161616; }
+    :root[data-theme="t3"] .delta,
+    :root[data-theme="t3"] .badge { border-radius:6px; }
+    :root[data-theme="t3"] .delta.neutral { background:transparent; border-color:transparent; }
+    :root[data-theme="t3"] .bar-track,
+    :root[data-theme="t3"] .bar-fill { border-radius:999px; }
+    :root[data-theme="t3"] .pace-notch { background:#ffffff; box-shadow:0 0 0 1.5px #111111; }
+    :root[data-theme="t3"] .special-summary:hover { background:#151515; }
+    :root[data-theme="t3"] .special-body { background:#0d0d0d; }
+
     @media(max-width:800px) {
       .topbar { flex-wrap:wrap; gap:12px; }
       .brand { font-size:16px; }
       .actions { flex-wrap:wrap; gap:8px; }
       .theme-picker > span { display:none; }
     }
-    @media(max-width:500px) {
-      .wrap { padding-left:16px; padding-right:16px; }
+    @media(max-width:580px) {
+      .wrap { padding-left:14px; padding-right:14px; }
       .masthead { margin:0; }
-      .topbar { min-height:62px; padding:12px 16px; }
-      .brand { font-size:13px; letter-spacing:.04em; gap:7px; }
-      .brand img { width:25px; height:25px; }
+      .topbar { min-height:60px; padding:12px 14px; }
+      .brand { font-size:14px; letter-spacing:.05em; gap:7px; }
+      .brand img { width:24px; height:24px; }
       .actions { width:100%; }
-      .usage-link { padding:8px; font-size:10px; }
+      .usage-link { padding:7px 8px; font-size:10px; }
       .refresh { width:31px; height:31px; }
       .theme-picker { margin-left:auto; }
-      .theme-picker select { max-width:112px; padding:8px 5px; font-size:10px; }
+      .theme-picker select { max-width:118px; padding:7px 6px; font-size:10.5px; }
       main { padding-top:12px!important; }
-      .panel { padding:18px; }
-      h1 { font-size:17px; }
-      .panel-head { gap:10px; flex-wrap:wrap; }
-      .meter { margin-top:19px; }
-      .meter strong { font-size:54px; }
-      .chart-head { margin-top:19px; }
-      .panel-foot { flex-direction:column; gap:2px; }
+      .panel { padding:14px; }
+      .prov-row { grid-template-columns:auto 1fr auto; row-gap:8px; column-gap:8px; padding:9px 10px; }
+      .prov-label { grid-row:1; grid-column:1; }
+      .prov-pct { grid-row:1; grid-column:2; text-align:left; }
+      .prov-right { grid-row:1; grid-column:3; }
+      .bar-track { grid-row:2; grid-column:1 / -1; }
+      .special-summary { flex-direction:column; align-items:stretch; gap:10px; padding:11px 14px; }
+      .special-right { justify-content:space-between; }
+      .special-sub { white-space:normal; }
       .footer { flex-direction:column; align-items:flex-start; gap:3px; }
     }
   </style>
 </head>
 <body>
-  <header class="masthead"><div class="wrap topbar"><a class="brand" href="/"><img src="/icon.svg" alt=""><span>ChatGPT Usage</span></a><a id="compare-plans" class="compare-link" href="#rightsizing" aria-controls="rightsizing" aria-expanded="false">Compare plans</a><div class="actions"><a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Usage and resets">Usage &amp; resets ↗</a><button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button><label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"></select></label></div></div></header>
+  <header class="masthead">
+    <div class="wrap topbar">
+      <a class="brand" href="/"><img src="/icon.svg" alt=""><span>AI Usage</span></a>
+      <a id="compare-plans" class="compare-link" href="#rightsizing" aria-controls="rightsizing" aria-expanded="false">Compare plans</a>
+      <div class="actions">
+        <a class="usage-link" href="https://chatgpt.com/codex/cloud/settings/analytics#usage" target="_blank" rel="noopener noreferrer" aria-label="Open ChatGPT Codex usage and resets">Codex ↗</a>
+        <button type="button" class="refresh" id="refresh" aria-label="Refresh usage" title="Refresh usage">↻</button>
+        <label class="theme-picker"><span>Theme</span><select data-theme-picker aria-label="Color theme"></select></label>
+      </div>
+    </div>
+  </header>
   <main class="wrap">
     <div id="panels" class="panels"></div>
     <div id="status" class="statusbar">Loading usage data…</div>
-    <details class="explain"><summary>About these charts</summary><p>The solid line is sampled remaining allowance. The faint diagonal spends the allowance evenly through each reported window. Above it means more room remains than an even pace. Samples are taken every 10 minutes; short bursts between samples may be missed.</p></details>
+    <details class="explain">
+      <summary>About these charts</summary>
+      <p>Each compact bar shows remaining allowance; the vertical tick marks where an even pace would be right now. In <strong>Both</strong> view, burndown lines share a normalized window-elapsed axis (0% start to 100% reset) so Codex and Antigravity Gemini can be compared directly against the dashed even-pace guide. Click a provider row or toggle to inspect wall-clock timestamps and past windows. Samples are taken every 10 minutes; short bursts between samples may be missed.</p>
+    </details>
     <section id="rightsizing" class="panel rightsizing" aria-label="Compare subscription plans" tabindex="-1" hidden></section>
   </main>
-  <footer class="wrap footer"><span>Private, local history · Codex app-server</span><span>Times shown in your browser’s time zone</span></footer>
+  <footer class="wrap footer">
+    <span>Private, local history · Codex &amp; Antigravity</span>
+    <span>Times shown in your browser’s time zone</span>
+  </footer>
   <script>
     const themePicker = document.querySelector('[data-theme-picker]');
     for (const [value, label] of Object.entries(themes)) {
@@ -606,56 +830,547 @@
     themePicker?.addEventListener('change', (event) => setTheme(event.target.value));
 
     const panels = document.getElementById('panels');
-    const status = document.getElementById('status');
+    const statusEl = document.getElementById('status');
+    const cardModes = { week: 'both', '5h': 'both' };
     const selectedResets = new Map();
+    const openSpecials = new Set();
+    const selectedSpecialViews = new Map();
     let lastData = null;
+
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const dateTime = seconds => new Date(seconds * 1000).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'});
-    const percent = number => `${Math.round(number)}%`;
+    const shortTime = seconds => new Date(seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const shortDate = seconds => new Date(seconds * 1000).toLocaleDateString([], {month:'short', day:'numeric'});
+    const percentInt = number => `${Math.round(number)}%`;
+    const percentPrecise = number => `${Math.round(number * 10) / 10}%`;
     const duration = seconds => {
       if (seconds <= 0) return 'now';
       const hours = Math.floor(seconds / 3600), minutes = Math.floor((seconds % 3600) / 60);
       if (hours >= 24) return `${Math.floor(hours / 24)}d ${hours % 24}h`;
       return hours ? `${hours}h ${minutes}m` : `${minutes}m`;
     };
-    function pace(window) {
-      const now = Date.now() / 1000, length = window.duration_mins * 60;
-      const ideal = Math.max(0, Math.min(100, (window.resets_at - now) / length * 100));
-      const remaining = 100 - window.used_percent;
+
+    function paceInfo(win) {
+      const now = Date.now() / 1000;
+      const remaining = Math.max(0, Math.min(100, 100 - win.used_percent));
+      if (win.idle || !win.resets_at) {
+        return { tone: 'neutral', label: 'Unused', deltaText: 'Idle', detail: 'Starts on first request', ideal: null, difference: null, active: false };
+      }
+      if (win.resets_at <= now) {
+        return { tone: 'neutral', label: 'Awaiting reset', deltaText: 'Ended', detail: 'Latest window has ended', ideal: 0, difference: remaining, active: false };
+      }
+      const length = win.duration_mins * 60;
+      const ideal = Math.max(0, Math.min(100, (win.resets_at - now) / length * 100));
       const difference = remaining - ideal;
-      if (window.resets_at <= now) return {tone:'neutral', label:'Awaiting reset', detail:'Latest window has ended'};
-      if (now - window.sampled_at > 1800) return {tone:'neutral', label:'Sample is stale', detail:'Waiting for a recent sample'};
-      const points = Math.round(Math.abs(difference) * 10) / 10;
-      const detail = difference === 0 ? 'At even pace'
+      if (now - win.sampled_at > 1800) {
+        return { tone: 'neutral', label: 'Sample is stale', deltaText: 'Stale', detail: 'Waiting for a recent sample', ideal, difference, active: true };
+      }
+      const absDiff = Math.abs(difference);
+      const rounded = absDiff >= 10 ? Math.round(absDiff) : Math.round(absDiff * 10) / 10;
+      const deltaText = rounded === 0 ? '0' : `${difference > 0 ? '+' : '-'}${rounded}`;
+      const points = Math.round(absDiff * 10) / 10;
+      const detail = points === 0 ? 'At even pace'
         : `${points} ${points === 1 ? 'point' : 'points'} ${difference > 0 ? 'above' : 'below'} even pace`;
-      if (Math.abs(difference) < 5) return {tone:'neutral', label:'On pace', detail};
+      if (absDiff < 5) return { tone: 'neutral', label: 'On pace', deltaText, detail, ideal, difference, active: true };
       return difference > 0
-        ? {tone:'good', label:'Room to spare', detail}
-        : {tone:'warn', label:'Burning fast', detail};
+        ? { tone: 'good', label: 'Room to spare', deltaText, detail, ideal, difference, active: true }
+        : { tone: 'warn', label: 'Burning fast', deltaText, detail, ideal, difference, active: true };
     }
 
-    function chart(window, reset, samples) {
+    function providerColor(provider, tone) {
+      if (tone === 'warn') return 'var(--warning)';
+      return provider === 'antigravity' ? 'var(--accent-2)' : 'var(--accent)';
+    }
+
+    function chartWallClock(win, reset, samples, color) {
       const width = matchMedia('(max-width: 600px)').matches ? 360 : 760;
-      const height = 225, left = 34, right = 13, top = 12, bottom = 33;
-      const windowStart = reset - window.duration_mins * 60;
-      const start = window.window_kind === '5h'
+      const height = 156, left = 34, right = 12, top = 12, bottom = 26;
+      const windowStart = reset - win.duration_mins * 60;
+      const start = win.window_kind === '5h'
         ? windowStart
         : samples.reduce((earliest, p) => Math.min(earliest, p.sampled_at), windowStart);
-      const span = reset - start;
-      const x = time => left + Math.max(0, Math.min(1, (time - start) / span)) * (width - left - right);
-      const y = remaining => top + (100 - remaining) / 100 * (height - top - bottom);
+      const span = Math.max(1, reset - start);
+      const x = t => left + Math.max(0, Math.min(1, (t - start) / span)) * (width - left - right);
+      const y = rem => top + (100 - rem) / 100 * (height - top - bottom);
       let html = '';
-      for (const value of [100, 50, 0]) {
-        html += `<line x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}" stroke="var(--soft-line)" stroke-dasharray="${value === 0 ? '' : '3 5'}"/><text x="0" y="${y(value)+4}" fill="var(--muted)" font-size="11">${value}%</text>`;
+      for (const val of [100, 50, 0]) {
+        html += `<line x1="${left}" y1="${y(val)}" x2="${width-right}" y2="${y(val)}" stroke="var(--soft-line)" stroke-dasharray="${val === 0 ? '' : '3 5'}"/>`;
+        html += `<text x="0" y="${y(val)+3.5}" fill="var(--muted)" font-size="10">${val}%</text>`;
       }
-      if (start < windowStart) html += `<line x1="${x(start)}" y1="${y(100)}" x2="${x(windowStart)}" y2="${y(100)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
-      html += `<line x1="${x(windowStart)}" y1="${y(100)}" x2="${x(reset)}" y2="${y(0)}" stroke="var(--muted)" opacity=".6" stroke-width="2" stroke-dasharray="5 6"/>`;
+      if (start < windowStart) {
+        html += `<line x1="${x(start)}" y1="${y(100)}" x2="${x(windowStart)}" y2="${y(100)}" stroke="var(--muted)" opacity=".55" stroke-width="1.6" stroke-dasharray="5 5"/>`;
+      }
+      html += `<line x1="${x(windowStart)}" y1="${y(100)}" x2="${x(reset)}" y2="${y(0)}" stroke="var(--muted)" opacity=".55" stroke-width="1.6" stroke-dasharray="5 5"/>`;
       const now = Date.now() / 1000;
-      if (start < now && now < reset) html += `<line x1="${x(now)}" y1="${top}" x2="${x(now)}" y2="${height-bottom}" stroke="var(--warning)" stroke-width="1.5" stroke-dasharray="3 5"/>`;
+      if (start < now && now < reset) {
+        html += `<line x1="${x(now)}" y1="${top}" x2="${x(now)}" y2="${height-bottom}" stroke="var(--warning)" stroke-width="1.4" stroke-dasharray="3 4"/>`;
+      }
       const points = samples.filter(p => p.sampled_at >= start && p.sampled_at <= reset && Number.isFinite(p.used_percent));
-      if (points.length > 1) html += `<polyline points="${points.map(p => `${x(p.sampled_at)},${y(100-p.used_percent)}`).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
-      for (const p of points) html += `<circle cx="${x(p.sampled_at)}" cy="${y(100-p.used_percent)}" r="3.5" fill="var(--accent)"><title>${percent(100-p.used_percent)} remaining · ${dateTime(p.sampled_at)}</title></circle>`;
-      html += `<text x="${left}" y="${height-4}" fill="var(--muted)" font-size="11">${dateTime(start)}</text><text x="${width-right}" y="${height-4}" text-anchor="end" fill="var(--muted)" font-size="11">${dateTime(reset)}</text>`;
+      if (points.length > 1) {
+        html += `<polyline points="${points.map(p => `${x(p.sampled_at).toFixed(1)},${y(100 - p.used_percent).toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+      }
+      const step = points.length > 60 ? Math.ceil(points.length / 50) : 1;
+      for (let i = 0; i < points.length; i++) {
+        const isLast = i === points.length - 1;
+        if (!isLast && i % step !== 0) continue;
+        const p = points[i];
+        const rem = 100 - p.used_percent;
+        const r = isLast ? 3.8 : (points.length <= 24 ? 2.6 : 2.1);
+        html += `<circle cx="${x(p.sampled_at).toFixed(1)}" cy="${y(rem).toFixed(1)}" r="${r}" fill="${color}" opacity="${isLast ? 1 : 0.85}"><title>${percentPrecise(rem)} remaining · ${dateTime(p.sampled_at)}</title></circle>`;
+      }
+      html += `<text x="${left}" y="${height-5}" fill="var(--muted)" font-size="10">${escapeHtml(dateTime(start))}</text>`;
+      html += `<text x="${width-right}" y="${height-5}" text-anchor="end" fill="var(--muted)" font-size="10">${escapeHtml(dateTime(reset))}</text>`;
       return `<svg class="plot" viewBox="0 0 ${width} ${height}" role="img" aria-label="Remaining allowance over time versus even pace">${html}</svg>`;
+    }
+
+    function chartOverlay(kind, entries) {
+      const width = matchMedia('(max-width: 600px)').matches ? 360 : 760;
+      const height = 156, left = 34, right = 12, top = 12, bottom = 26;
+      const x = frac => left + Math.max(0, Math.min(1, frac)) * (width - left - right);
+      const y = rem => top + (100 - rem) / 100 * (height - top - bottom);
+      let html = '';
+      for (const val of [100, 50, 0]) {
+        html += `<line x1="${left}" y1="${y(val)}" x2="${width-right}" y2="${y(val)}" stroke="var(--soft-line)" stroke-dasharray="${val === 0 ? '' : '3 5'}"/>`;
+        html += `<text x="0" y="${y(val)+3.5}" fill="var(--muted)" font-size="10">${val}%</text>`;
+      }
+      html += `<line x1="${x(0)}" y1="${y(100)}" x2="${x(1)}" y2="${y(0)}" stroke="var(--muted)" opacity=".55" stroke-width="1.6" stroke-dasharray="5 5"/>`;
+
+      for (const entry of entries) {
+        const win = entry.win;
+        if (!win || !win.resets_at) continue;
+        const durationSecs = win.duration_mins * 60;
+        const windowStart = win.resets_at - durationSecs;
+        const rawPoints = (win.samples || []).filter(p => p.sampled_at >= windowStart && p.sampled_at <= win.resets_at && Number.isFinite(p.used_percent));
+        const points = rawPoints.length ? rawPoints : [{ sampled_at: win.sampled_at, used_percent: win.used_percent }];
+        const coords = points.map(p => ({
+          px: x((p.sampled_at - windowStart) / durationSecs),
+          py: y(100 - p.used_percent),
+          rem: 100 - p.used_percent,
+          at: p.sampled_at,
+        }));
+        if (coords.length > 1) {
+          html += `<polyline points="${coords.map(c => `${c.px.toFixed(1)},${c.py.toFixed(1)}`).join(' ')}" fill="none" stroke="${entry.color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }
+        const step = coords.length > 60 ? Math.ceil(coords.length / 45) : 1;
+        for (let i = 0; i < coords.length; i++) {
+          const isLast = i === coords.length - 1;
+          if (!isLast && i % step !== 0) continue;
+          const c = coords[i];
+          const r = isLast ? 3.8 : 2.1;
+          html += `<circle cx="${c.px.toFixed(1)}" cy="${c.py.toFixed(1)}" r="${r}" fill="${entry.color}" opacity="${isLast ? 1 : 0.7}"><title>${escapeHtml(entry.label)}: ${percentPrecise(c.rem)} remaining · ${dateTime(c.at)}</title></circle>`;
+        }
+      }
+
+      const midLabel = kind === '5h' ? '2.5h elapsed' : '50% elapsed';
+      const endLabel = kind === '5h' ? 'Reset (5h)' : 'Reset (100%)';
+      html += `<text x="${left}" y="${height-5}" fill="var(--muted)" font-size="10">Window start (0%)</text>`;
+      html += `<text x="${((left + width - right) / 2).toFixed(1)}" y="${height-5}" text-anchor="middle" fill="var(--muted)" font-size="10">${midLabel}</text>`;
+      html += `<text x="${width-right}" y="${height-5}" text-anchor="end" fill="var(--muted)" font-size="10">${endLabel}</text>`;
+      return `<svg class="plot" viewBox="0 0 ${width} ${height}" role="img" aria-label="Normalized burndown comparison versus even pace">${html}</svg>`;
+    }
+
+    function buildProviderRow(entry, clickable) {
+      const { key, label, win } = entry;
+      const p = paceInfo(win);
+      const remaining = Math.max(0, Math.min(100, 100 - win.used_percent));
+      const isAg = key === 'ag';
+      const el = document.createElement(clickable ? 'button' : 'div');
+      if (clickable) el.type = 'button';
+      el.className = 'prov-row' + (clickable ? ' clickable' : '');
+      const resetShort = win.idle || !win.resets_at
+        ? 'Unused'
+        : `<b>${escapeHtml(duration(win.resets_at - Date.now() / 1000))}</b> · ${escapeHtml(win.window_kind === '5h' ? shortTime(win.resets_at) : shortDate(win.resets_at))}`;
+      const deltaClass = p.tone === 'warn' ? 'warn' : (p.tone === 'neutral' ? 'neutral' : (isAg ? 'ag' : ''));
+      const fillClass = p.tone === 'warn' ? 'warn' : (win.idle ? 'idle' : (isAg ? 'ag' : ''));
+      const notchHtml = p.active && p.ideal !== null
+        ? `<span class="pace-notch" style="left:${p.ideal.toFixed(2)}%"></span>`
+        : '';
+      const tipParts = [`${label}: ${percentPrecise(remaining)} remaining`];
+      if (p.ideal !== null) tipParts.push(`even pace ${percentPrecise(p.ideal)} (${p.deltaText} pts)`);
+      if (win.resets_at && !win.idle) tipParts.push(`resets ${dateTime(win.resets_at)}`);
+      if (win.limit_description) tipParts.push(win.limit_description);
+      el.title = tipParts.join(' · ');
+      el.innerHTML = `
+        <span class="prov-label"><i class="pdot${isAg ? ' ag' : ''}"></i>${escapeHtml(label)}</span>
+        <span class="prov-pct">${percentInt(remaining)}</span>
+        <span class="bar-track">
+          <span class="bar-fill ${fillClass}" style="width:${remaining.toFixed(2)}%"></span>
+          ${notchHtml}
+        </span>
+        <span class="prov-right">
+          <span class="delta ${deltaClass}">${escapeHtml(p.deltaText)}</span>
+          <span>${resetShort}</span>
+        </span>`;
+      return el;
+    }
+
+    function windowCard(kind, codexWin, agWin) {
+      const fiveHour = kind === '5h';
+      const entries = [];
+      if (codexWin) entries.push({ key: 'codex', label: 'Codex', win: codexWin, color: 'var(--accent)' });
+      if (agWin) entries.push({ key: 'ag', label: 'Gemini', win: agWin, color: 'var(--accent-2)' });
+      if (!entries.length) return null;
+
+      const hasBoth = entries.length === 2;
+      let mode = hasBoth ? (cardModes[kind] || 'both') : entries[0].key;
+      if (!hasBoth) cardModes[kind] = mode;
+
+      const article = document.createElement('article');
+      article.className = 'panel';
+      article.innerHTML = `
+        <div class="card-head">
+          <div class="card-title-group">
+            <h1>${fiveHour ? '5-hour allowance' : 'Weekly allowance'}</h1>
+            <span class="card-sub">remaining · tick marks even pace</span>
+          </div>
+          ${hasBoth ? `<div class="seg" role="tablist" aria-label="${fiveHour ? '5-hour' : 'Weekly'} chart series">
+            <button type="button" data-mode="both">Both</button>
+            <button type="button" data-mode="codex">Codex</button>
+            <button type="button" data-mode="ag">Gemini</button>
+          </div>` : ''}
+        </div>
+        <div class="prov-rows"></div>
+        <div class="chart-head">
+          <b>Burndown</b>
+          <select aria-label="Choose ${fiveHour ? '5-hour' : 'weekly'} usage window" hidden></select>
+        </div>
+        <div class="chart"></div>
+        <div class="card-foot">
+          <div class="legend"></div>
+          <span class="foot-detail"></span>
+        </div>`;
+
+      const rowsWrap = article.querySelector('.prov-rows');
+      const rowMap = {};
+      for (const entry of entries) {
+        const rowEl = buildProviderRow(entry, hasBoth);
+        rowMap[entry.key] = rowEl;
+        if (hasBoth) {
+          rowEl.addEventListener('click', () => setMode(mode === entry.key ? 'both' : entry.key));
+        }
+        rowsWrap.append(rowEl);
+      }
+
+      const select = article.querySelector('select');
+      const chartEl = article.querySelector('.chart');
+      const legendEl = article.querySelector('.legend');
+      const detailEl = article.querySelector('.foot-detail');
+      let renderSeq = 0;
+
+      async function renderSingleChart(entry) {
+        const win = entry.win;
+        const color = entry.color;
+        const seq = ++renderSeq;
+        if (!win.cycles.length) {
+          chartEl.innerHTML = '<div class="idle-note"><span>No anchored window history yet.</span></div>';
+          return;
+        }
+        const reset = Number(select.value);
+        if (reset === win.resets_at) {
+          chartEl.innerHTML = chartWallClock(win, reset, win.samples, color);
+          return;
+        }
+        try {
+          const url = `/api/series?source=${encodeURIComponent(win.source_key)}&reset=${reset}&provider=${encodeURIComponent(win.provider)}`;
+          const response = await fetch(url);
+          const payload = await response.json();
+          if (seq !== renderSeq) return;
+          chartEl.innerHTML = chartWallClock(win, reset, payload.samples || [], color);
+        } catch {
+          if (seq === renderSeq) chartEl.textContent = 'Could not load this window.';
+        }
+      }
+
+      function populateSelect(entry) {
+        const win = entry.win;
+        const selectionKey = `${win.provider}:${win.source_key}:${win.window_kind}`;
+        select.replaceChildren();
+        for (const cycle of win.cycles) {
+          const opt = document.createElement('option');
+          opt.value = String(cycle);
+          opt.textContent = cycle === win.resets_at
+            ? (fiveHour ? 'Current 5h' : 'Current week')
+            : `Reset ${dateTime(cycle)}`;
+          select.append(opt);
+        }
+        const saved = selectedResets.get(selectionKey);
+        if (saved && win.cycles.includes(saved)) {
+          select.value = String(saved);
+        } else {
+          selectedResets.delete(selectionKey);
+        }
+        select.hidden = win.cycles.length === 0;
+        select.onchange = () => {
+          selectedResets.set(selectionKey, Number(select.value));
+          renderSingleChart(entry);
+        };
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        cardModes[kind] = nextMode;
+        article.querySelectorAll('[data-mode]').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === nextMode));
+        if (rowMap.codex) rowMap.codex.classList.toggle('selected-codex', hasBoth && nextMode === 'codex');
+        if (rowMap.ag) rowMap.ag.classList.toggle('selected-ag', hasBoth && nextMode === 'ag');
+
+        if (nextMode === 'both') {
+          renderSeq++;
+          select.hidden = true;
+          chartEl.innerHTML = chartOverlay(kind, entries);
+          legendEl.innerHTML = '<span><i class="swatch"></i> Codex</span><span><i class="swatch ag"></i> Gemini</span><span><i class="swatch guide"></i> Even pace</span><span><i class="swatch-notch"></i> Pace notch</span>';
+          detailEl.textContent = 'Click a row for wall-clock history';
+          return;
+        }
+        const entry = entries.find(e => e.key === nextMode) || entries[0];
+        const p = paceInfo(entry.win);
+        const rem = Math.max(0, Math.min(100, 100 - entry.win.used_percent));
+        populateSelect(entry);
+        renderSingleChart(entry);
+        legendEl.innerHTML = `<span><i class="swatch${entry.key === 'ag' ? ' ag' : ''}"></i> ${escapeHtml(entry.label)}</span><span><i class="swatch guide"></i> Even pace</span><span><i class="swatch-notch"></i> Pace notch</span>`;
+        detailEl.textContent = `${entry.label} · ${p.detail} · ${percentPrecise(rem)} left`;
+      }
+
+      article.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => setMode(btn.dataset.mode));
+      });
+
+      setMode(mode);
+      return article;
+    }
+
+    function formatPoolTitle(limitId, limitName) {
+      if (limitId === '3p') return 'Claude & GPT';
+      if (limitId === 'gemini-argon') return 'Gemini 4 Argon';
+      return limitName || limitId;
+    }
+
+    function formatPoolSub(limitId, description, hasFiveHour) {
+      if (description) {
+        const match = description.match(/^Models within this group:\s*(.+)$/i);
+        if (match) {
+          return match[1].split(',').map(s => s.trim()).filter(Boolean).join(' · ');
+        }
+      }
+      if (limitId === 'gemini-argon' && !hasFiveHour) {
+        return 'Separate Pro-plan weekly quota · no 5h cap';
+      }
+      return description || (hasFiveHour ? 'Weekly and 5-hour quota pool' : 'Weekly quota pool');
+    }
+
+    function specialsTray(extraWindows) {
+      if (!extraWindows.length) return null;
+      const groups = new Map();
+      for (const win of extraWindows) {
+        if (!groups.has(win.limit_id)) {
+          groups.set(win.limit_id, { limit_id: win.limit_id, limit_name: win.limit_name, limit_description: win.limit_description, week: null, five: null });
+        }
+        const g = groups.get(win.limit_id);
+        if (win.window_kind === 'week') g.week = win;
+        else if (win.window_kind === '5h') g.five = win;
+        if (!g.limit_name && win.limit_name) g.limit_name = win.limit_name;
+        if (!g.limit_description && win.limit_description) g.limit_description = win.limit_description;
+      }
+
+      const section = document.createElement('section');
+      section.className = 'specials-wrap';
+      section.setAttribute('aria-label', 'Other Antigravity pools');
+      section.innerHTML = '<span class="specials-label">Other Antigravity pools · click to expand</span><div class="special-tray"></div>';
+      const tray = section.querySelector('.special-tray');
+
+      for (const group of groups.values()) {
+        const title = formatPoolTitle(group.limit_id, group.limit_name);
+        const sub = formatPoolSub(group.limit_id, group.limit_description, Boolean(group.five));
+        const activeWins = [group.five, group.week].filter(w => w && !w.idle && w.resets_at > 0);
+        let badgeText = 'Unused', badgeClass = '';
+        if (activeWins.length) {
+          const paces = activeWins.map(w => paceInfo(w));
+          const worst = paces.find(p => p.tone === 'warn') || paces.find(p => p.tone === 'neutral') || paces[0];
+          badgeText = worst.label;
+          badgeClass = worst.tone === 'warn' ? ' warn' : (worst.tone === 'good' ? ' ag' : '');
+        }
+
+        function miniMeterHtml(label, win) {
+          if (!win) {
+            return `<div class="mini-pill na"><div class="mini-pill-top"><span>${label}</span><b>—</b></div><div class="mini-bar idle"><i style="width:0%"></i></div></div>`;
+          }
+          const rem = Math.max(0, Math.min(100, 100 - win.used_percent));
+          const p = paceInfo(win);
+          const barClass = win.idle ? 'idle' : (p.tone === 'warn' ? 'warn' : '');
+          const notch = p.active && p.ideal !== null
+            ? `<span class="mini-notch" style="left:${p.ideal.toFixed(2)}%"></span>`
+            : '';
+          return `<div class="mini-pill" title="${escapeHtml(label)}: ${percentPrecise(rem)} remaining${p.ideal !== null ? ` · even pace ${percentPrecise(p.ideal)}` : ''}">
+            <div class="mini-pill-top"><span>${label}</span><b>${percentInt(rem)}</b></div>
+            <div class="mini-bar ${barClass}"><i style="width:${rem.toFixed(2)}%"></i>${notch}</div>
+          </div>`;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'special-item' + (openSpecials.has(group.limit_id) ? ' open' : '');
+        item.innerHTML = `
+          <button type="button" class="special-summary" aria-expanded="${openSpecials.has(group.limit_id)}">
+            <div class="special-info">
+              <div class="special-name">
+                <span>${escapeHtml(title)}</span>
+                <span class="badge${badgeClass}">${escapeHtml(badgeText)}</span>
+              </div>
+              <div class="special-sub" title="${escapeHtml(group.limit_description || sub)}">${escapeHtml(sub)}</div>
+            </div>
+            <div class="special-right">
+              <div class="mini-meters">
+                ${miniMeterHtml('Week', group.week)}
+                ${miniMeterHtml('5h', group.five)}
+              </div>
+              <span class="chev">▾</span>
+            </div>
+          </button>
+          <div class="special-body"></div>`;
+
+        const summaryBtn = item.querySelector('.special-summary');
+        const bodyEl = item.querySelector('.special-body');
+        let bodyRendered = false;
+
+        function renderSpecialBody() {
+          bodyRendered = true;
+          const options = [];
+          if (!activeWins.length) {
+            options.push({ id: 'idle', label: 'No current window', win: null, reset: 0 });
+          }
+          for (const win of [group.five, group.week]) {
+            if (!win) continue;
+            const prefix = win.window_kind === '5h' ? '5h' : 'Week';
+            for (const cycle of win.cycles) {
+              if (cycle === win.resets_at && win.idle) continue;
+              const isCurrent = cycle === win.resets_at && !win.idle;
+              options.push({
+                id: `${win.source_key}:${cycle}`,
+                label: isCurrent ? `Current ${prefix.toLowerCase()}` : `${prefix} · Reset ${dateTime(cycle)}`,
+                win,
+                reset: cycle,
+              });
+            }
+          }
+
+          const savedId = selectedSpecialViews.get(group.limit_id);
+          const selectedOpt = options.find(o => o.id === savedId) || options[0];
+
+          bodyEl.replaceChildren();
+          const head = document.createElement('div');
+          head.className = 'chart-head';
+          head.style.marginTop = '11px';
+          const titleB = document.createElement('b');
+          const sel = document.createElement('select');
+          sel.setAttribute('aria-label', `Choose ${title} usage window`);
+          for (const opt of options) {
+            sel.append(new Option(opt.label, opt.id, false, opt.id === selectedOpt.id));
+          }
+          head.append(titleB);
+          if (options.length > 1) head.append(sel);
+          const content = document.createElement('div');
+          bodyEl.append(head, content);
+
+          let seq = 0;
+          async function showView(opt) {
+            const mySeq = ++seq;
+            if (!opt || !opt.win) {
+              head.style.display = 'none';
+              const idleCopy = group.limit_id === 'gemini-argon'
+                ? 'Unused — weekly reset clock starts on your first Gemini 4 Argon request.'
+                : 'Unused — 5-hour and weekly reset clocks start on your first request in this pool.';
+              content.innerHTML = `<div class="idle-note"><span>${escapeHtml(idleCopy)}</span></div>`;
+              if (options.length > 1) {
+                content.querySelector('.idle-note').append(sel);
+              }
+              return;
+            }
+            head.style.display = '';
+            if (options.length > 1 && sel.parentElement !== head) head.append(sel);
+            const win = opt.win;
+            const kindLabel = win.window_kind === '5h' ? '5-hour burndown' : 'Weekly burndown';
+            const isCurrent = opt.reset === win.resets_at && !win.idle;
+            titleB.textContent = isCurrent
+              ? `${kindLabel} · resets ${dateTime(opt.reset)} (${duration(opt.reset - Date.now() / 1000)})`
+              : `${kindLabel} · reset ${dateTime(opt.reset)}`;
+            const color = providerColor('antigravity', isCurrent ? paceInfo(win).tone : 'good');
+            if (opt.reset === win.resets_at) {
+              content.innerHTML = chartWallClock(win, opt.reset, win.samples, color);
+              return;
+            }
+            try {
+              const url = `/api/series?source=${encodeURIComponent(win.source_key)}&reset=${opt.reset}&provider=antigravity`;
+              const response = await fetch(url);
+              const payload = await response.json();
+              if (mySeq !== seq) return;
+              content.innerHTML = chartWallClock(win, opt.reset, payload.samples || [], color);
+            } catch {
+              if (mySeq === seq) content.textContent = 'Could not load this window.';
+            }
+          }
+
+          sel.addEventListener('change', () => {
+            selectedSpecialViews.set(group.limit_id, sel.value);
+            showView(options.find(o => o.id === sel.value));
+          });
+          showView(selectedOpt);
+        }
+
+        summaryBtn.addEventListener('click', () => {
+          const isOpen = item.classList.toggle('open');
+          summaryBtn.setAttribute('aria-expanded', String(isOpen));
+          if (isOpen) {
+            openSpecials.add(group.limit_id);
+            if (!bodyRendered) renderSpecialBody();
+          } else {
+            openSpecials.delete(group.limit_id);
+          }
+        });
+        if (openSpecials.has(group.limit_id)) renderSpecialBody();
+        tray.append(item);
+      }
+
+      return section;
+    }
+
+    function renderStatus(data) {
+      statusEl.replaceChildren();
+      statusEl.classList.remove('error');
+      const providers = data.providers || {};
+      const entries = [];
+      if (providers.codex) entries.push({ name: 'Codex', key: 'codex', info: providers.codex });
+      if (providers.antigravity && (providers.antigravity.configured || providers.antigravity.last_run)) {
+        entries.push({ name: 'Antigravity', key: 'antigravity', info: providers.antigravity });
+      }
+      if (!entries.length && data.last_run) {
+        entries.push({ name: 'Codex', key: 'codex', info: { configured: true, last_run: data.last_run } });
+      }
+
+      let anyRun = false;
+      for (const item of entries) {
+        const run = item.info.last_run;
+        const seg = document.createElement('span');
+        seg.className = 'status-seg';
+        if (!run) {
+          seg.innerHTML = `<i class="sdot muted"></i><span>${escapeHtml(item.name)} · awaiting first sample</span>`;
+        } else if (!run.ok) {
+          anyRun = true;
+          seg.classList.add('error');
+          const hint = item.key === 'codex' && run.status === 'rate_limits_unavailable'
+            ? ' (try Refresh or codex login)'
+            : (item.key === 'antigravity' && run.status.includes('token') ? ' (check Antigravity login)' : '');
+          seg.innerHTML = `<i class="sdot err"></i><span>${escapeHtml(item.name)} failed (${escapeHtml(run.status)}) at ${escapeHtml(dateTime(run.checked_at))}${escapeHtml(hint)}</span>`;
+        } else {
+          anyRun = true;
+          seg.innerHTML = `<i class="sdot"></i><span>${escapeHtml(item.name)} · checked ${escapeHtml(dateTime(run.checked_at))}</span>`;
+        }
+        statusEl.append(seg);
+      }
+      if (!anyRun && !entries.length) {
+        statusEl.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
+      } else {
+        const auto = document.createElement('span');
+        auto.textContent = '· auto-refreshes while visible';
+        statusEl.append(auto);
+      }
     }
 
     function emptyPanel() {
@@ -665,72 +1380,27 @@
       return article;
     }
 
-    function panel(window) {
-      const remaining = 100 - window.used_percent, currentPace = pace(window);
-      const fiveHour = window.window_kind === '5h';
-      const selectionKey = `${window.source_key}:${window.window_kind}`;
-      const article = document.createElement('article');
-      article.className = 'panel';
-      article.innerHTML = `<div class="panel-head"><div><div class="kicker">Codex · ${fiveHour ? '5-hour' : 'weekly'}</div><h1>${fiveHour ? '5-hour allowance' : 'Weekly allowance'}</h1></div><span class="badge"></span></div>
-        <div class="meter"><strong></strong><span>remaining</span></div><div class="bar"><i></i></div>
-        <div class="chart-head"><b>Burndown</b><select aria-label="Choose usage window"></select></div><div class="chart"></div>
-        <div class="legend"><span><i class="swatch"></i> Actual</span><span><i class="swatch guide"></i> Even pace</span></div>
-        <div class="metrics"><div class="metric"><small>Resets</small><b class="reset"></b></div><div class="metric"><small>Time left</small><b class="time-left"></b></div></div>
-        <div class="panel-foot"><span class="pace-detail"></span></div>`;
-      article.querySelector('.meter strong').textContent = percent(remaining);
-      article.querySelector('.badge').textContent = currentPace.label;
-      article.querySelector('.badge').classList.add(currentPace.tone);
-      article.querySelector('.bar i').style.width = `${Math.max(0, remaining)}%`;
-      if (currentPace.tone === 'warn') article.querySelector('.bar i').classList.add('warn');
-      article.querySelector('.reset').textContent = dateTime(window.resets_at);
-      article.querySelector('.time-left').textContent = duration(window.resets_at - Date.now()/1000);
-      article.querySelector('.pace-detail').textContent = currentPace.detail;
-      const select = article.querySelector('select');
-      select.setAttribute('aria-label', fiveHour ? 'Choose 5-hour usage window' : 'Choose weekly usage window');
-      for (const cycle of window.cycles) {
-        const option = document.createElement('option');
-        option.value = String(cycle);
-        option.textContent = cycle === window.resets_at ? 'Current window' : `Reset ${dateTime(cycle)}`;
-        select.append(option);
-      }
-      const chartElement = article.querySelector('.chart');
-      chartElement.innerHTML = chart(window, window.resets_at, window.samples);
-      const showCycle = async () => {
-        const reset = Number(select.value);
-        if (reset === window.resets_at) { chartElement.innerHTML = chart(window, reset, window.samples); return; }
-        try {
-          const response = await fetch(`/api/series?source=${encodeURIComponent(window.source_key)}&reset=${reset}`);
-          const data = await response.json();
-          chartElement.innerHTML = chart(window, reset, data.samples);
-        } catch { chartElement.textContent = 'Could not load this window.'; }
-      };
-      select.addEventListener('change', () => { selectedResets.set(selectionKey, Number(select.value)); showCycle(); });
-      const selectedReset = selectedResets.get(selectionKey);
-      if (selectedReset && window.cycles.includes(selectedReset)) {
-        select.value = String(selectedReset);
-        showCycle();
-      } else {
-        selectedResets.delete(selectionKey);
-      }
-      return article;
-    }
-
     function render(data) {
       lastData = data;
       panels.replaceChildren();
-      const weekly = data.windows.find(w => w.limit_id === 'codex' && w.window_kind === 'week') || data.windows.find(w => w.window_kind === 'week');
-      const fiveHour = data.windows.find(w => w.limit_id === (weekly?.limit_id || 'codex') && w.window_kind === '5h');
-      for (const window of [weekly, fiveHour]) if (window) panels.append(panel(window));
+      const allWindows = data.windows || [];
+      const codexWeek = allWindows.find(w => w.provider === 'codex' && w.limit_id === 'codex' && w.window_kind === 'week')
+        || allWindows.find(w => w.provider === 'codex' && w.window_kind === 'week');
+      const codexFive = allWindows.find(w => w.provider === 'codex' && w.limit_id === (codexWeek?.limit_id || 'codex') && w.window_kind === '5h');
+      const agWeek = allWindows.find(w => w.provider === 'antigravity' && w.limit_id === 'gemini' && w.window_kind === 'week');
+      const agFive = allWindows.find(w => w.provider === 'antigravity' && w.limit_id === 'gemini' && w.window_kind === '5h');
+      const extraAg = allWindows.filter(w => w.provider === 'antigravity' && w.limit_id !== 'gemini');
+
+      // Keep Weekly on top, 5-hour second, tucked Antigravity pools below.
+      const weekCard = windowCard('week', codexWeek, agWeek);
+      const fiveCard = windowCard('5h', codexFive, agFive);
+      if (weekCard) panels.append(weekCard);
+      if (fiveCard) panels.append(fiveCard);
+      const tray = specialsTray(extraAg);
+      if (tray) panels.append(tray);
       if (!panels.children.length) panels.append(emptyPanel());
-      const last = data.last_run;
-      if (!last) status.textContent = 'No samples yet. The scheduled collector runs every 10 minutes.';
-      else if (!last.ok) {
-        const hint = last.status === 'rate_limits_unavailable'
-          ? ' Try Refresh. If this persists after changing plans, sign in again with codex login on the server.' : '';
-        status.textContent = `Last check failed (${last.status}) at ${dateTime(last.checked_at)}. Previous samples remain visible.${hint}`;
-        status.classList.add('error');
-      }
-      else { status.classList.remove('error'); status.textContent = `Checked ${dateTime(last.checked_at)} · auto-refreshes while visible`; }
+
+      renderStatus(data);
       window.dispatchEvent(new Event('usage:updated'));
     }
 
@@ -739,7 +1409,10 @@
         const response = await fetch('/api/dashboard', {cache:'no-store'});
         if (!response.ok) throw new Error('Dashboard unavailable');
         render(await response.json());
-      } catch (error) { status.textContent = error.message || 'Could not load usage data'; status.classList.add('error'); }
+      } catch (error) {
+        statusEl.textContent = error.message || 'Could not load usage data';
+        statusEl.classList.add('error');
+      }
     }
 
     let refreshing = false;
@@ -750,15 +1423,15 @@
       refreshing = true;
       refreshButton.disabled = true;
       refreshButton.textContent = '…';
-      status.classList.remove('error');
-      status.textContent = 'Checking live usage…';
+      statusEl.classList.remove('error');
+      statusEl.textContent = 'Checking live usage…';
       try {
         const response = await fetch(force ? '/api/refresh?force=1' : '/api/refresh', {method:'POST', cache:'no-store'});
         if (!response.ok) throw new Error('Could not check live usage');
         render(await response.json());
       } catch (error) {
-        status.textContent = `${error.message || 'Could not check live usage'}. Showing the last sample.`;
-        status.classList.add('error');
+        statusEl.textContent = `${error.message || 'Could not check live usage'}. Showing the last sample.`;
+        statusEl.classList.add('error');
       } finally {
         refreshing = false;
         refreshButton.disabled = false;

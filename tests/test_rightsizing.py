@@ -157,6 +157,18 @@ class EvidenceAndApiTest(unittest.TestCase):
         self.sample(2400, 1, rs.FIVE_HOURS, account="c", duration=300)
         self.assertIsNone(rs.evidence(self.connection, app.usage_cycles))
 
+    def test_antigravity_samples_do_not_affect_codex_rightsizing(self):
+        self.sample(0, 0, rs.WEEK)
+        self.sample(600, 7, rs.WEEK)
+        self.connection.execute("""INSERT INTO samples (sampled_at,account_id,source_key,
+            limit_id,window_kind,duration_mins,resets_at,used_percent,provider)
+            VALUES (?,?,?,'gemini','week',10080,?,50,'antigravity')""",
+            (BASE + 1200, "ag:user", "antigravity:gemini-weekly", BASE + rs.WEEK))
+        self.connection.commit()
+        evidence = rs.evidence(self.connection, app.usage_cycles)
+        self.assertEqual(evidence["source"], "codex:primary")
+        self.assertEqual(sum(e["amount"] for e in evidence["events"]), 7)
+
     def test_http_comparison_is_read_only_and_serves_assets(self):
         self.sample(0, 0, rs.WEEK)
         self.sample(600, 5, rs.WEEK)

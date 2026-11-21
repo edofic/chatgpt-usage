@@ -44,5 +44,6 @@
 .rs-method { margin-top:18px; padding-top:14px; border-top:1px solid var(--soft-line); }
 .rs-method p { color:var(--muted); font-size:12px; }
 :root[data-theme="chatgpt"] .rightsizing button,:root[data-theme="chatgpt"] .rightsizing input { border-radius:8px; }
+:root[data-theme="t3"] .rightsizing button,:root[data-theme="t3"] .rightsizing input,:root[data-theme="t3"] .rightsizing select { border-radius:8px; }
 @media(max-width:700px) { .rs-plans { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:500px) { .rs-fields { grid-template-columns:repeat(2,minmax(0,1fr)); } .rs-detail { gap:12px; } .rs-stat b { font-size:23px; } .rightsizing h2 { font-size:18px; } }
