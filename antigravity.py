@@ -1,9 +1,13 @@
-"""Read-only Google Antigravity quota collector using existing OAuth refresh credentials."""
+"""Read-only Google Antigravity quota collector using existing OAuth credentials."""
 
 from datetime import datetime
 import json
 import math
+import os
 from pathlib import Path
+import re
+import select
+import subprocess
 import threading
 import time
 from urllib.error import HTTPError, URLError
@@ -17,6 +21,9 @@ DEFAULT_TOKEN_URI = "https://oauth2.googleapis.com/token"
 USER_AGENT = "antigravity/cli/99.0.0 linux/amd64"
 WINDOWS = {"5h": ("5h", 300), "weekly": ("week", 10080)}
 HTTP_TIMEOUT = 10
+AGY_BIN = os.environ.get("AGY_BIN", "agy")
+AGY_REFRESH_TIMEOUT = 25
+EXPIRY_MARGIN_SECS = 60.0
 
 _cache_lock = threading.Lock()
 _token_cache = {}
@@ -34,8 +41,9 @@ def clear_cache():
 def _load_credentials(token_path):
     path = Path(token_path).expanduser()
     try:
-        stat = path.stat()
-        raw = path.read_text(encoding="utf-8")
+        resolved = path.resolve()
+        stat = resolved.stat()
+        raw = resolved.read_text(encoding="utf-8")
     except OSError as exc:
         raise AntigravityError("antigravity_unconfigured") from exc
     try:
@@ -44,19 +52,34 @@ def _load_credentials(token_path):
         raise AntigravityError("antigravity_auth_invalid") from exc
     if not isinstance(data, dict):
         raise AntigravityError("antigravity_auth_invalid")
+    cache_key = (str(resolved), stat.st_mtime_ns)
     client_id = data.get("client_id")
     client_secret = data.get("client_secret")
     refresh_token = data.get("refresh_token")
     token_uri = data.get("token_uri") or DEFAULT_TOKEN_URI
-    if not all(isinstance(v, str) and v for v in (client_id, client_secret, refresh_token, token_uri)):
-        raise AntigravityError("antigravity_auth_invalid")
-    return {
-        "cache_key": (str(path.resolve()), stat.st_mtime_ns),
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "refresh_token": refresh_token,
-        "token_uri": token_uri,
-    }
+    if all(isinstance(v, str) and v for v in (client_id, client_secret, refresh_token, token_uri)):
+        return {
+            "kind": "oauth_client",
+            "path": resolved,
+            "cache_key": cache_key,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "token_uri": token_uri,
+        }
+    token = data.get("token")
+    if isinstance(token, dict):
+        access_token = token.get("access_token")
+        if isinstance(access_token, str) and access_token:
+            return {
+                "kind": "agy_token",
+                "path": resolved,
+                "cache_key": cache_key,
+                "access_token": access_token,
+                "expiry": parse_reset_time(token.get("expiry")),
+                "has_refresh_token": isinstance(token.get("refresh_token"), str) and bool(token.get("refresh_token")),
+            }
+    raise AntigravityError("antigravity_auth_invalid")
 
 
 def _http_json(url, *, method="GET", headers=None, body=None, timeout=HTTP_TIMEOUT, error_code="antigravity_quota_unavailable"):
@@ -119,16 +142,126 @@ def _fetch_account_id(access_token):
     return "ag:default"
 
 
+def _refresh_via_agy(token_path):
+    """Trigger native agy OAuth refresh via a read-only ACP session/list call."""
+    app_dir = Path(token_path).expanduser().resolve().parent
+    if not app_dir.name or app_dir == app_dir.parent:
+        raise AntigravityError("antigravity_token_refresh_failed")
+    env = dict(os.environ, HOME=str(app_dir.parent))
+    try:
+        process = subprocess.Popen(
+            [AGY_BIN, "acp", "--gemini-dir", ".", "--app-data-dir", app_dir.name, "--stdio"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            bufsize=0,
+            env=env,
+        )
+    except OSError as exc:
+        raise AntigravityError("antigravity_token_refresh_failed") from exc
+    try:
+        deadline = time.monotonic() + AGY_REFRESH_TIMEOUT
+        buffer = b""
+
+        def send(request):
+            try:
+                process.stdin.write((json.dumps(request) + "\n").encode("utf-8"))
+                process.stdin.flush()
+            except OSError as exc:
+                raise AntigravityError("antigravity_token_refresh_failed") from exc
+
+        def receive(request_id):
+            nonlocal buffer
+            while time.monotonic() < deadline:
+                if b"\n" not in buffer:
+                    remaining = max(0.0, deadline - time.monotonic())
+                    ready, _, _ = select.select([process.stdout], [], [], min(1.0, remaining))
+                    if not ready:
+                        if process.poll() is not None:
+                            raise AntigravityError("antigravity_token_refresh_failed")
+                        continue
+                    chunk = os.read(process.stdout.fileno(), 65536)
+                    if not chunk:
+                        raise AntigravityError("antigravity_token_refresh_failed")
+                    buffer += chunk
+                    if len(buffer) > 1024 * 1024:
+                        raise AntigravityError("antigravity_token_refresh_failed")
+                    continue
+                line, buffer = buffer.split(b"\n", 1)
+                try:
+                    message = json.loads(line)
+                except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                    raise AntigravityError("antigravity_token_refresh_failed") from exc
+                if not isinstance(message, dict):
+                    raise AntigravityError("antigravity_token_refresh_failed")
+                if message.get("id") == request_id:
+                    return message
+            raise AntigravityError("antigravity_token_refresh_failed")
+
+        send({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+              "params": {"protocolVersion": 1, "clientCapabilities": {}}})
+        if "error" in receive(1):
+            raise AntigravityError("antigravity_token_refresh_failed")
+        send({"jsonrpc": "2.0", "id": 2, "method": "session/list", "params": {}})
+        if "error" in receive(2):
+            raise AntigravityError("antigravity_token_refresh_failed")
+    except OSError as exc:
+        raise AntigravityError("antigravity_token_refresh_failed") from exc
+    finally:
+        process.terminate()
+        try:
+            process.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        process.stdin.close()
+        process.stdout.close()
+
+
 def _get_session(creds, force_refresh=False):
     key = creds["cache_key"]
     now = time.monotonic()
     with _cache_lock:
         cached = _token_cache.get(key)
         if not force_refresh and cached and cached["expires_at"] > now:
-            return cached["access_token"], cached["account_id"]
-    access_token, expires_at = _refresh_access_token(creds)
+            return cached["access_token"], cached["account_id"], False
+
+    refreshed = False
+    if creds["kind"] == "oauth_client":
+        access_token, expires_at = _refresh_access_token(creds)
+        refreshed = True
+    else:
+        current = creds
+        wall_now = time.time()
+        expired = current["expiry"] > 0 and current["expiry"] <= wall_now + EXPIRY_MARGIN_SECS
+        if force_refresh or expired:
+            previous_token = current["access_token"]
+            _refresh_via_agy(current["path"])
+            refreshed = True
+            reloaded = _load_credentials(current["path"])
+            if reloaded["kind"] != "agy_token":
+                raise AntigravityError("antigravity_token_refresh_failed")
+            reloaded_expired = reloaded["expiry"] > 0 and reloaded["expiry"] <= time.time() + EXPIRY_MARGIN_SECS
+            if reloaded_expired or (force_refresh and reloaded["access_token"] == previous_token):
+                raise AntigravityError("antigravity_token_refresh_failed")
+            current = reloaded
+            key = current["cache_key"]
+            wall_now = time.time()
+        access_token = current["access_token"]
+        if current["expiry"] > 0:
+            remaining = max(0.0, current["expiry"] - wall_now - EXPIRY_MARGIN_SECS)
+            expires_at = time.monotonic() + remaining
+        else:
+            expires_at = time.monotonic() + EXPIRY_MARGIN_SECS
+
     with _cache_lock:
         previous = _token_cache.get(key)
+        if not previous:
+            path_str = key[0]
+            for (cached_path, _), entry in _token_cache.items():
+                if cached_path == path_str and entry.get("account_id") != "ag:default":
+                    previous = entry
+                    break
         account_id = previous["account_id"] if previous and previous.get("account_id") != "ag:default" else None
     if not account_id:
         account_id = _fetch_account_id(access_token)
@@ -138,14 +271,14 @@ def _get_session(creds, force_refresh=False):
             "expires_at": expires_at,
             "account_id": account_id,
         }
-    return access_token, account_id
+    return access_token, account_id, refreshed
 
 
 def read_limits(token_path):
-    """Fetch live Antigravity quota summary without modifying or logging credentials."""
+    """Fetch live Antigravity quota summary without logging credentials."""
     creds = _load_credentials(token_path)
     for attempt in range(2):
-        access_token, account_id = _get_session(creds, force_refresh=(attempt > 0))
+        access_token, account_id, refreshed = _get_session(creds, force_refresh=(attempt > 0))
         try:
             summary = _http_json(
                 QUOTA_URL,
@@ -160,7 +293,7 @@ def read_limits(token_path):
             )
             return {"accountId": account_id, "summary": summary}
         except AntigravityError as exc:
-            if attempt == 0 and str(exc) == "antigravity_quota_unavailable:401":
+            if attempt == 0 and not refreshed and str(exc) == "antigravity_quota_unavailable:401":
                 continue
             raise AntigravityError("antigravity_quota_unavailable") from exc
     raise AntigravityError("antigravity_quota_unavailable")
@@ -185,6 +318,8 @@ def parse_reset_time(value):
     text = value.strip()
     if text.endswith("Z"):
         text = text[:-1] + "+00:00"
+    # Python 3.10 fromisoformat rejects non-3/6 fractional digit counts (e.g. Go RFC3339Nano).
+    text = re.sub(r"\.(\d+)", lambda m: "." + m.group(1)[:6].ljust(6, "0"), text)
     try:
         dt = datetime.fromisoformat(text)
     except ValueError:

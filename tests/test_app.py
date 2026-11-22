@@ -383,5 +383,179 @@ class AntigravityTest(unittest.TestCase):
         self.assertTrue(dash["providers"]["codex"]["last_run"]["ok"])
 
 
+class AntigravityAuthTest(unittest.TestCase):
+    def setUp(self):
+        import antigravity
+        antigravity.clear_cache()
+        self.addCleanup(antigravity.clear_cache)
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.app_dir = Path(self.directory.name) / "antigravity-acp"
+        self.app_dir.mkdir()
+
+    def write_token(self, filename, payload):
+        import json
+        path = self.app_dir / filename
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def fake_agy(self, script_body):
+        executable = Path(self.directory.name) / "agy"
+        executable.write_text(
+            "#!/usr/bin/env python3\nimport json, os, sys\n" + script_body,
+            encoding="utf-8",
+        )
+        executable.chmod(0o700)
+        return executable
+
+    def test_legacy_acp_token_format_still_refreshes_via_oauth(self):
+        import antigravity
+        path = self.write_token("acp_token.json", {
+            "client_id": "cid",
+            "client_secret": "csec",
+            "refresh_token": "rtok",
+        })
+        calls = []
+
+        def fake_http(url, **kwargs):
+            calls.append(url)
+            if url == antigravity.DEFAULT_TOKEN_URI:
+                return {"access_token": "fresh-oauth", "expires_in": 3600}
+            if url == antigravity.USERINFO_URL:
+                return {"sub": "123"}
+            if url == antigravity.QUOTA_URL:
+                self.assertEqual(kwargs["headers"]["Authorization"], "Bearer fresh-oauth")
+                return {"groups": []}
+            raise AssertionError(url)
+
+        with patch.object(antigravity, "_http_json", side_effect=fake_http):
+            result = antigravity.read_limits(path)
+        self.assertEqual(result, {"accountId": "ag:123", "summary": {"groups": []}})
+        self.assertEqual(calls, [antigravity.DEFAULT_TOKEN_URI, antigravity.USERINFO_URL, antigravity.QUOTA_URL])
+
+    def test_agy_oauth_token_uses_unexpired_access_token_without_spawning_agy(self):
+        import antigravity
+        from datetime import datetime, timedelta, timezone
+        future = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")
+        path = self.write_token("antigravity-oauth-token", {
+            "auth_method": "oauth-personal",
+            "id_token_email": "user@example.com",
+            "token": {
+                "access_token": "live-tok",
+                "expires_in": 3599,
+                "expiry": future,
+                "refresh_token": "rtok",
+                "token_type": "Bearer",
+            },
+        })
+
+        def fake_http(url, **kwargs):
+            if url == antigravity.USERINFO_URL:
+                return {"sub": "456"}
+            if url == antigravity.QUOTA_URL:
+                self.assertEqual(kwargs["headers"]["Authorization"], "Bearer live-tok")
+                return {"groups": []}
+            raise AssertionError(url)
+
+        with patch.object(antigravity, "_refresh_via_agy", side_effect=AssertionError("should not spawn")), \
+                patch.object(antigravity, "_http_json", side_effect=fake_http):
+            result = antigravity.read_limits(path)
+        self.assertEqual(result["accountId"], "ag:456")
+
+    def test_agy_oauth_token_refreshes_expired_token_via_native_acp(self):
+        import antigravity
+        from datetime import datetime, timedelta, timezone
+        past = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")
+        future = (datetime.now(timezone.utc) + timedelta(minutes=50)).strftime("%Y-%m-%dT%H:%M:%S.123456789Z")
+        path = self.write_token("antigravity-oauth-token", {
+            "auth_method": "oauth-personal",
+            "id_token_email": "user@example.com",
+            "token": {
+                "access_token": "stale-tok",
+                "expiry": past,
+                "refresh_token": "rtok",
+                "token_type": "Bearer",
+            },
+        })
+        agy = self.fake_agy(f'''
+assert sys.argv[1:] == ["acp", "--gemini-dir", ".", "--app-data-dir", "antigravity-acp", "--stdio"]
+assert os.environ["HOME"] == {str(self.app_dir.parent)!r}
+req1 = json.loads(sys.stdin.readline())
+assert req1["method"] == "initialize"
+print(json.dumps({{"jsonrpc": "2.0", "id": req1["id"], "result": {{}}}}), flush=True)
+req2 = json.loads(sys.stdin.readline())
+assert req2["method"] == "session/list"
+token_file = os.path.join(os.environ["HOME"], "antigravity-acp", "antigravity-oauth-token")
+with open(token_file, "w", encoding="utf-8") as fh:
+    json.dump({{"auth_method": "oauth-personal", "token": {{"access_token": "renewed-tok", "expiry": {future!r}, "refresh_token": "rtok"}}}}, fh)
+print(json.dumps({{"jsonrpc": "2.0", "id": req2["id"], "result": {{"sessions": []}}}}), flush=True)
+''')
+
+        def fake_http(url, **kwargs):
+            if url == antigravity.USERINFO_URL:
+                return {"sub": "789"}
+            if url == antigravity.QUOTA_URL:
+                self.assertEqual(kwargs["headers"]["Authorization"], "Bearer renewed-tok")
+                return {"groups": []}
+            raise AssertionError(url)
+
+        with patch.object(antigravity, "AGY_BIN", str(agy)), \
+                patch.object(antigravity, "_http_json", side_effect=fake_http):
+            result = antigravity.read_limits(path)
+        self.assertEqual(result["accountId"], "ag:789")
+
+    def test_agy_oauth_token_retries_once_on_401_and_fails_cleanly_without_agy(self):
+        import antigravity
+        from datetime import datetime, timedelta, timezone
+        future = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat().replace("+00:00", "Z")
+        path = self.write_token("antigravity-oauth-token", {
+            "auth_method": "oauth-personal",
+            "token": {"access_token": "revoked-tok", "expiry": future, "refresh_token": "rtok"},
+        })
+        agy = self.fake_agy(f'''
+req1 = json.loads(sys.stdin.readline())
+print(json.dumps({{"jsonrpc": "2.0", "id": req1["id"], "result": {{}}}}), flush=True)
+req2 = json.loads(sys.stdin.readline())
+token_file = os.path.join(os.environ["HOME"], "antigravity-acp", "antigravity-oauth-token")
+with open(token_file, "w", encoding="utf-8") as fh:
+    json.dump({{"auth_method": "oauth-personal", "token": {{"access_token": "fresh-after-401", "expiry": {future!r}, "refresh_token": "rtok"}}}}, fh)
+print(json.dumps({{"jsonrpc": "2.0", "id": req2["id"], "result": {{"sessions": []}}}}), flush=True)
+''')
+        quota_tokens = []
+
+        def fake_http(url, **kwargs):
+            if url == antigravity.USERINFO_URL:
+                return {"sub": "999"}
+            if url == antigravity.QUOTA_URL:
+                auth = kwargs["headers"]["Authorization"]
+                quota_tokens.append(auth)
+                if auth == "Bearer revoked-tok":
+                    raise antigravity.AntigravityError("antigravity_quota_unavailable:401")
+                return {"groups": []}
+            raise AssertionError(url)
+
+        with patch.object(antigravity, "AGY_BIN", str(agy)), \
+                patch.object(antigravity, "_http_json", side_effect=fake_http):
+            result = antigravity.read_limits(path)
+        self.assertEqual(result["accountId"], "ag:999")
+        self.assertEqual(quota_tokens, ["Bearer revoked-tok", "Bearer fresh-after-401"])
+
+        # Missing agy binary on expired token fails cleanly with a token error code.
+        antigravity.clear_cache()
+        past = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")
+        self.write_token("antigravity-oauth-token", {
+            "auth_method": "oauth-personal",
+            "token": {"access_token": "stale", "expiry": past, "refresh_token": "rtok"},
+        })
+        with patch.object(antigravity, "AGY_BIN", "/nonexistent/agy"):
+            with self.assertRaisesRegex(antigravity.AntigravityError, "^antigravity_token_refresh_failed$"):
+                antigravity.read_limits(path)
+
+    def test_parse_reset_time_handles_go_fractional_seconds(self):
+        import antigravity
+        self.assertGreater(antigravity.parse_reset_time("2026-11-22T21:47:12.12345Z"), 0)
+        self.assertGreater(antigravity.parse_reset_time("2026-11-22T21:47:12.123456789+01:00"), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
